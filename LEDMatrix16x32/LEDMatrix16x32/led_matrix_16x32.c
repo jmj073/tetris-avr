@@ -1,0 +1,226 @@
+/*
+ * led_matrix_16x32.c
+ *
+ * Created: 2022-06-30 20:09:51
+ *  Author: JMJ073
+ */ 
+
+#define LED16X32_SHORT_MACRO
+
+#include "led_matrix_16x32.h"
+#include <string.h>
+#include <util/delay.h>
+
+uint8_t __LED16X32_MATRIX[LEDMAT_H / 2][LEDMAT_W];
+
+static inline void _addr(uint8_t addr) {
+	PORT(LEDMAT_CR) = (PORT(LEDMAT_CR) & ~0x07) | (addr & 0x07);
+}
+static inline void _rgb(uint8_t rgb) {
+	PORT(LEDMAT_RGB) = (PORT(LEDMAT_RGB) & ~LEDMAT_RGB_ALL) | (rgb & LEDMAT_RGB_ALL);
+}
+static inline void _rgb1(uint8_t rgb1) {
+	PORT(LEDMAT_RGB) = (PORT(LEDMAT_RGB) & ~LEDMAT_RGB1) | (rgb1 & LEDMAT_RGB1);
+}
+static inline void _rgb2(uint8_t rgb2) {
+	PORT(LEDMAT_RGB) = (PORT(LEDMAT_RGB) & ~LEDMAT_RGB2) | ((rgb2 << 3) & LEDMAT_RGB2);
+}
+static inline void _clock() {
+	PORT(LEDMAT_CR) |= _BV(LEDMAT_CLK);
+	PORT(LEDMAT_CR) &= ~_BV(LEDMAT_CLK);
+}
+static inline void _latch() {
+	PORT(LEDMAT_CR) |= _BV(LEDMAT_LAT);
+	PORT(LEDMAT_CR) &= ~_BV(LEDMAT_LAT);
+}
+static inline void _out_enable() {
+	PORT(LEDMAT_CR) &= ~_BV(LEDMAT_OE);
+}
+static inline void _out_disable() {
+	PORT(LEDMAT_CR) |= _BV(LEDMAT_OE);
+}
+static inline void _tx_section(uint8_t addr, const uint8_t* RGBs) {
+	_addr(addr);
+	
+	for (uint8_t i = 0; i < LEDMAT_W; i++) {
+		_rgb(*RGBs++);
+		_clock();
+	}
+	
+	_latch();
+}
+
+static inline void LEDMAT_init_port()
+{
+	DDR(LEDMAT_RGB) |= LEDMAT_RGB_ALL;
+	DDR(LEDMAT_CR) |= LEDMAT_CR_ALL;
+}
+
+void LEDMAT_init()
+{
+	LEDMAT_init_port();
+	_out_disable();
+}
+
+void LEDMAT_clear_all()
+{
+	memset(__LED16X32_MATRIX, 0, sizeof(__LED16X32_MATRIX));
+}
+
+
+void LEDMAT_refresh()
+{
+	static uint8_t row;
+
+	_out_disable();
+	_tx_section(row, __LED16X32_MATRIX[row]);
+	_out_enable();
+
+	row = RR(row, 8);
+}
+
+
+#if 0
+// UNIT TEST
+
+#include <avr/interrupt.h>
+
+ISR(TIMER0_OVF_vect) {
+	LMAT_refresh();
+}
+
+static void timer0_init() {
+	TCCR0 |= _BV(CS01) | _BV(CS00); // ∫–¡÷∫Ò 64
+	TIMSK |= _BV(TOIE0);
+}
+
+#include <avr/delay.h>
+
+int main() {
+	//DDRD |= _BV(7);
+	//
+	//loop {
+		//PORTD ^= _BV(7);
+		//_delay_ms(250);
+	//}
+	
+	LMAT_init();
+	
+	for (u8 i = 0; i < LEDMAT_H; i++)
+	for (u8 j = 0; j < LEDMAT_W; j++)
+	LMAT_set_rgb(i, j, CR | CG | CB);
+	
+	timer0_init();
+	
+	sei();
+	
+	loop {
+		//for (u8 i = 0; i < LEDMAT_H; i++)
+		//for (u8 j = 0; j < LEDMAT_W; j++)
+		//LMAT_set_rgb(i, j, CR);
+//
+		//_delay_ms(1000);
+//
+		//for (u8 i = 0; i < LEDMAT_H; i++)
+		//for (u8 j = 0; j < LEDMAT_W; j++)
+		//LMAT_set_rgb(i, j, CG | CB);
+//
+		//_delay_ms(1000);
+		
+		LMAT_refresh();
+		_delay_ms(1);
+	}
+}
+
+//int main() {
+	//LMAT_init();
+//
+	//
+	//// [3, 10], [12, 19]
+	//for (u8 i = 0; i < 10; i++) {
+		//LMAT_set_rgb(3, 10 + i, CG);
+		//LMAT_set_rgb(3 + i, 19, CG);
+		//LMAT_set_rgb(12, 10 + i, CG);
+		//LMAT_set_rgb(3 + i, 10, CG);
+	//}
+	//
+	//loop {
+		//LMAT_refresh();
+		//_delay_ms(1);
+	//}
+//}
+
+//int main(void)
+//{
+//LED16X32_init_port();
+//
+//// fill color----------------------------------------
+//
+////for (uint8_t i = 0; i < 16; i++)
+////LED16X32_set_rgb(i, i, (CR | CG | CB) ^ i);
+//
+////for (uint8_t i = 0; i < 32; i++) {
+////LED16X32_set_rgb(0, i, i);
+////LED16X32_set_rgb(8, i, ~i);
+////}
+//
+////loop {
+////for (uint8_t i = 0; i < 8; i++)
+////_tx_section(i, __LED16X32_MATRIX[i]);
+////}
+//
+//// ghosting issue====================================================
+//
+////for (uint8_t i = 0; i < 32; i += 2) {
+////LED16X32_set_rgb(0, i, (CR | CG | CB));
+////LED16X32_set_rgb(8, i, (CR | CG | CB));
+////LED16X32_set_rgb(3, i + 1, CR);
+////LED16X32_set_rgb(11, i + 1, CR);
+////}
+////
+////loop {
+////_tx_section(3, __LED16X32_MATRIX[3]);
+////_tx_section(0, __LED16X32_MATRIX[0]);
+////}
+//
+//// OE test====================================================
+//
+//for (uint8_t i = 0; i < 32; i += 2) {
+//LED16X32_set_rgb(0, i, (CR | CG | CB));
+//LED16X32_set_rgb(8, i, (CR | CG | CB));
+//LED16X32_set_rgb(3, i + 1, CR);
+//LED16X32_set_rgb(11, i + 1, CR);
+//}
+//
+////loop {
+////_out_disable();
+////_tx_section(3, __LED16X32_MATRIX[3]);
+////_out_enable();
+////_delay_ms(1);
+////
+////
+////_out_disable();
+////_tx_section(0, __LED16X32_MATRIX[0]);
+////_out_enable();
+////
+////_delay_ms(1);
+////}
+//
+////====================================================
+//
+////for (uint8_t i = 0; i < 32; i++) {
+////LED16X32_set_rgb(0, i, (CR | CG | CB));
+////LED16X32_set_rgb(8, i, (CR | CG | CB));
+////}
+////
+////loop {
+////_tx_section(0, __LED16X32_MATRIX[0]);
+////}
+//
+//loop {
+//LED16X32_refresh();
+//_delay_ms(1);
+//}
+//}
+
+#endif // UNIT TEST
