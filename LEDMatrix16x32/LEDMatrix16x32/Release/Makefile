@@ -40,7 +40,7 @@ C_SRCS +=  \
 ../interrupts.c \
 ../led_matrix_16x32.c \
 ../main.c \
-../task_queue.c \
+../teris.c \
 ../timer.c
 
 
@@ -54,28 +54,28 @@ OBJS +=  \
 interrupts.o \
 led_matrix_16x32.o \
 main.o \
-task_queue.o \
+teris.o \
 timer.o
 
 OBJS_AS_ARGS +=  \
 interrupts.o \
 led_matrix_16x32.o \
 main.o \
-task_queue.o \
+teris.o \
 timer.o
 
 C_DEPS +=  \
 interrupts.d \
 led_matrix_16x32.d \
 main.d \
-task_queue.d \
+teris.d \
 timer.d
 
 C_DEPS_AS_ARGS +=  \
 interrupts.d \
 led_matrix_16x32.d \
 main.d \
-task_queue.d \
+teris.d \
 timer.d
 
 OUTPUT_FILE_PATH +=LEDMatrix16x32.elf
@@ -113,7 +113,7 @@ LINKER_SCRIPT_DEP+=
 	@echo Finished building: $<
 	
 
-./task_queue.o: .././task_queue.c
+./teris.o: .././teris.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DNDEBUG -DF_CPU=16000000L  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\include"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -Wall -mmcu=atmega128a -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\gcc\dev\atmega128a" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 

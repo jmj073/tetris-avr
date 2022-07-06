@@ -140,6 +140,9 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="display_matrix_api.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="interrupts.c">
       <SubType>compile</SubType>
     </Compile>
@@ -164,10 +167,10 @@
     <Compile Include="shortint.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="task_queue.c">
+    <Compile Include="teris.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="task_queue.h">
+    <Compile Include="tetris.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="timer.h">

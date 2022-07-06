@@ -7,7 +7,6 @@
 
 #include <avr/interrupt.h>
 #include "pins.h"
-#include "task_queue.h"
 #include "shortint.h"
 #define LED16X32_SHORT_MACRO
 #include "led_matrix_16x32.h"

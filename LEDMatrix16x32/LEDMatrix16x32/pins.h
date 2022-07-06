@@ -25,12 +25,12 @@
 #define BtN_RIGHT	3
 #define BtN_PRESSED() (~PIN(BtN_PIN) & BtN_ALL_PINS)
 
-#define DEF_PREV_DIGITAL_READ() u8 __PREV_DIGITAL_READ
-#define IS_RISING(curr, bit) ((bit) & (curr) & ~__PREV_DIGITAL_READ)
-#define IS_FALLING(curr, bit) ((bit) & ~(curr) & __PREV_DIGITAL_READ)
+#define DEF_PREV_DIGITAL_READ(n) u8 __PREV_DIGITAL_READ##n
+#define IS_RISING(n, curr, bit) ((bit) & (curr) & ~__PREV_DIGITAL_READ##n)
+#define IS_FALLING(n, curr, bit) ((bit) & ~(curr) & __PREV_DIGITAL_READ##n)
 #define IS_HIGH(curr, bit) ((bit) & (curr))
 #define IS_LOW(curr, bit) ((bit) & ~(curr))
-#define UPDATE_PREV_DIGITAL_READ(curr) ((void)(__PREV_DIGITAL_READ = (curr)))
+#define UPDATE_PREV_DIGITAL_READ(n, curr) ((void)(__PREV_DIGITAL_READ##n = (curr)))
 
 
 #endif /* PINS_H_ */

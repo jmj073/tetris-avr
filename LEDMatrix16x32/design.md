@@ -1,17 +1,23 @@
 수행 할 작업, 사용 방법, 모듈화 방법, 서비스가 서로 어떻게 동작하는지, 구조가 무엇인지, 테스트 및 디버깅 방법, 업데이트 방법
 
+# 해야할 것
+
+1. 코드 다듬기
+2. frame 출력 반전 제대로 고쳐놓기
+3. 점수 표시 넣기 & 화면 표시 수정하기
+
 ## 16x32 LED Matrix Contol Library
 
 + 라이브러리가 수행해야할 기능:
-	LED에 표시할 데이터를 LED에 보낸다.
-	LED에 표시할 데이터를 조작한다.
-	
+  LED에 표시할 데이터를 LED에 보낸다.
+  LED에 표시할 데이터를 조작한다.
+
 + 라이브러리 사용 방법:
-	LED 메트릭스 데이터에 출력하고 싶은 색깔 설정.
-	출력함수 호출. 주기적으로 리프레시 해줘야 한다.	타이머 인터럽트를 사용할 수 있다.
-	
-	
-	
+  LED 메트릭스 데이터에 출력하고 싶은 색깔 설정.
+  출력함수 호출. 주기적으로 리프레시 해줘야 한다. 타이머 인터럽트를 사용할 수 있다.
+
+  
+
 + LED matrix에 출력할 데이터를 설정하는 것을 '그린다'라고 표현하겠다.
 
 그리는 도중에도 리프레시로 인해 그리기는 계속된다. 
@@ -40,17 +46,17 @@ class RGBmatrixPanel: public Adafruit_GFX;
 난다.
 
 + drawRect
-	+ startWrite
-	+ writeFastHLine
-		+ drawFastHLine
-			+ startWrite
-			+ writeLine
-				+ 여러가지 전처리
-				+ writePixel
-				+ drawPixel
-					+ 버퍼에 실질적으로 데이터를 기록
-			+ endWrite
-	+ endWrite
+  + startWrite
+  + writeFastHLine
+    + drawFastHLine
+      + startWrite
+      + writeLine
+        + 여러가지 전처리
+        + writePixel
+        + drawPixel
+          + 버퍼에 실질적으로 데이터를 기록
+      + endWrite
+  + endWrite
 
 # LED MATRIX 구현 방법
 
@@ -134,3 +140,4 @@ class RGBmatrixPanel: public Adafruit_GFX;
   + 반연속 방식
 + **RIGHT**: move piece to right
   + 반연속 방식
+

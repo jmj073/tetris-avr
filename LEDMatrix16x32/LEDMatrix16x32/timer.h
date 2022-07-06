@@ -12,6 +12,11 @@
 
 #include <stdint.h>
 
+#define TIME_OUTA(curr, prev, n)(((curr) - (prev)) >= n\
+								&& ((prev) = (curr), 1))
+#define TIME_OUTI(curr, prev, n)(((curr) - (prev)) >= n\
+								&& ((prev) += n, 1))
+
 #define DEF_PREV_MS(n) uint32_t __prev_ms_##n
 #define PREV_MS(n) __prev_ms_##n
 // Assignment

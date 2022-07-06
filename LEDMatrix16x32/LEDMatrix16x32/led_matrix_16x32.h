@@ -10,11 +10,14 @@
 #define LED_MATRIX_16X32_H_
 
 #include <avr/io.h>
+#include <string.h>
 #include "shortint.h"
 #include "my_util.h"
 
-#define LEDMAT_H 16
-#define LEDMAT_W 32
+#define LEDMAT_ROW 16
+#define LEDMAT_COL 32
+
+#define LEDMAT_SECTION (LEDMAT_ROW / 2)
 
 /* FOR RGB PINS */
 #define LEDMAT_RGB		(&PINB)
@@ -73,52 +76,58 @@
 #define CB _BV(2)
 
 /* functions */
-#define LMAT_init		LEDMAT_init
-#define LMAT_clear_all	LEDMAT_clear_all
-#define LMAT_refresh	LEDMAT_refresh
-#define LMAT_set_rgb	LEDMAT_set_rgb
-#define LMAT_get_rgb	LEDMAT_get_rgb
+#define LMAT_init			LEDMAT_init
+#define LMAT_clear_all		LEDMAT_clear
+#define LMAT_refresh		LEDMAT_refresh
+#define LMAT_set_rgb_bit	LEDMAT_set_rgb_bit
+#define LMAT_get_rgb_bit	LEDMAT_get_rgb_bit
 
 #endif /* LED_MATRIX_16X32_SHORTCUT */
 
-typedef u8 LEDMAT_t[LEDMAT_H / 2][LEDMAT_W];
-
-#define DEF_LED_MATRIX(name) u8 name[LEDMAT_H / 2][LEDMAT_W]
-#define DECL_LED_MATRIX(name) extern u8 name[LEDMAT_H / 2][LEDMAT_W]
+// 임의로 수정하지 말것
+extern u8 __LEDMAT_BUFFER[2][LEDMAT_SECTION][LEDMAT_COL];
+extern u8 __LEDMAT_CURR_BUF;
+#define LEDMAT_FRONT_BUF __LEDMAT_BUFFER[__LEDMAT_CURR_BUF]
+#define LEDMAT_BACK_BUF __LEDMAT_BUFFER[__LEDMAT_CURR_BUF ^ 1]
 
 void LEDMAT_init();
-void LEDMAT_clear_all();
+
+static inline void LEDMAT_swap_buffer();
+static inline void LEDMAT_copy_buffer();
+
+static inline void LEDMAT_set_rgb_bit(u8 r, u8 c, u8 rgb);
+static inline u8 LEDMAT_get_rgb_bit(u8 r, u8 c);
+void LEDMAT_clear();
+
 void LEDMAT_refresh();
-static inline 
-void LEDMAT_set_rgb(u8 r, u8 c, u8 rgb);
-static inline 
-u8 LEDMAT_get_rgb(u8 r, u8 c);
 
 
-static inline 
-void LEDMAT_set_rgb(u8 r, u8 c, u8 rgb)
+static inline void LEDMAT_swap_buffer()
 {
-	extern uint8_t __LED16X32_MATRIX[LEDMAT_H / 2][LEDMAT_W];
-	
+	__LEDMAT_CURR_BUF ^= 1;
+}
+static inline void LEDMAT_copy_buffer()
+{
+	memcpy(LEDMAT_BACK_BUF, LEDMAT_FRONT_BUF, sizeof(LEDMAT_BACK_BUF));
+}
+
+static inline void LEDMAT_set_rgb_bit(u8 r, u8 c, u8 rgb)
+{
 	if (r < 8) {
-		__LED16X32_MATRIX[r][c] 
-		= (__LED16X32_MATRIX[r][c] & ~LEDMAT_RGB1) 
+		LEDMAT_BACK_BUF[r][c] 
+		= (LEDMAT_BACK_BUF[r][c] & ~LEDMAT_RGB1) 
 		| (rgb & LEDMAT_RGB1);
 	} else {
-		__LED16X32_MATRIX[r & 7][c] 
-		= (__LED16X32_MATRIX[r & 7][c] & ~LEDMAT_RGB2) 
+		LEDMAT_BACK_BUF[r & 7][c] 
+		= (LEDMAT_BACK_BUF[r & 7][c] & ~LEDMAT_RGB2) 
 		| ((rgb << 3) & LEDMAT_RGB2);
 	}
 }
-
-static inline
-u8 LEDMAT_get_rgb(u8 r, u8 c)
+static inline u8 LEDMAT_get_rgb_bit(u8 r, u8 c)
 {
-	extern uint8_t __LED16X32_MATRIX[LEDMAT_H / 2][LEDMAT_W];
-	
 	return r < 8 ?
-		__LED16X32_MATRIX[r][c] & LEDMAT_RGB1:
-		__LED16X32_MATRIX[r & 7][c] >> 3;
+		LEDMAT_BACK_BUF[r][c] & LEDMAT_RGB1:
+		LEDMAT_BACK_BUF[r & 7][c] >> 3;
 }
 
 

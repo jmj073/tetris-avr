@@ -8,7 +8,7 @@ led_matrix_16x32.c
 
 main.c
 
-task_queue.c
+teris.c
 
 timer.c
 

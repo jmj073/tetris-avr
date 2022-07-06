@@ -8,21 +8,21 @@
 #define LED16X32_SHORT_MACRO
 
 #include "led_matrix_16x32.h"
-#include <string.h>
 #include <util/delay.h>
 
-uint8_t __LED16X32_MATRIX[LEDMAT_H / 2][LEDMAT_W];
+u8 __LEDMAT_BUFFER[2][LEDMAT_SECTION][LEDMAT_COL];
+u8 __LEDMAT_CURR_BUF = 0;
 
-static inline void _addr(uint8_t addr) {
+static inline void _addr(u8 addr) {
 	PORT(LEDMAT_CR) = (PORT(LEDMAT_CR) & ~0x07) | (addr & 0x07);
 }
-static inline void _rgb(uint8_t rgb) {
+static inline void _rgb(u8 rgb) {
 	PORT(LEDMAT_RGB) = (PORT(LEDMAT_RGB) & ~LEDMAT_RGB_ALL) | (rgb & LEDMAT_RGB_ALL);
 }
-static inline void _rgb1(uint8_t rgb1) {
+static inline void _rgb1(u8 rgb1) {
 	PORT(LEDMAT_RGB) = (PORT(LEDMAT_RGB) & ~LEDMAT_RGB1) | (rgb1 & LEDMAT_RGB1);
 }
-static inline void _rgb2(uint8_t rgb2) {
+static inline void _rgb2(u8 rgb2) {
 	PORT(LEDMAT_RGB) = (PORT(LEDMAT_RGB) & ~LEDMAT_RGB2) | ((rgb2 << 3) & LEDMAT_RGB2);
 }
 static inline void _clock() {
@@ -39,10 +39,10 @@ static inline void _out_enable() {
 static inline void _out_disable() {
 	PORT(LEDMAT_CR) |= _BV(LEDMAT_OE);
 }
-static inline void _tx_section(uint8_t addr, const uint8_t* RGBs) {
+static inline void _tx_section(u8 addr, const u8* RGBs) {
 	_addr(addr);
 	
-	for (uint8_t i = 0; i < LEDMAT_W; i++) {
+	for (uint8_t i = 0; i < LEDMAT_COL; i++) {
 		_rgb(*RGBs++);
 		_clock();
 	}
@@ -62,21 +62,21 @@ void LEDMAT_init()
 	_out_disable();
 }
 
-void LEDMAT_clear_all()
+void LEDMAT_clear()
 {
-	memset(__LED16X32_MATRIX, 0, sizeof(__LED16X32_MATRIX));
+	_out_disable();
+	memset(LEDMAT_BACK_BUF, 0, sizeof(LEDMAT_BACK_BUF));
 }
-
 
 void LEDMAT_refresh()
 {
-	static uint8_t row;
+	static u8 section;
 
 	_out_disable();
-	_tx_section(row, __LED16X32_MATRIX[row]);
+	_tx_section(section, LEDMAT_FRONT_BUF[section]);
 	_out_enable();
 
-	row = RR(row, 8);
+	section = RR(section, LEDMAT_SECTION);
 }
 
 
@@ -106,9 +106,9 @@ int main() {
 	
 	LMAT_init();
 	
-	for (u8 i = 0; i < LEDMAT_H; i++)
-	for (u8 j = 0; j < LEDMAT_W; j++)
-	LMAT_set_rgb(i, j, CR | CG | CB);
+	for (u8 i = 0; i < LEDMAT_ROW; i++)
+		for (u8 j = 0; j < LEDMAT_COL; j++)
+			LMAT_set_rgb_bit(i, j, CR | CG | CB);
 	
 	timer0_init();
 	
