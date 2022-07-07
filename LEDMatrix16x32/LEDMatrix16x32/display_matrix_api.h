@@ -11,9 +11,7 @@
 
 #include "led_matrix_16x32.h"
 
-// 32
 #define DMAT_ROW	LEDMAT_COL
-// 16
 #define DMAT_COL	LEDMAT_ROW 
 
 #define DMAT_init() LEDMAT_init()
@@ -47,6 +45,8 @@ static inline void DMAT_end_write(u8 flags) {
 		LEDMAT_copy_buffer();
 	}
 }
+
+void DMAT_draw_digit_bit(u8 row, u8 col, u8 n, u8 rgb);
 
 
 #endif /* DISPLAY_MATRIX_API_H_ */

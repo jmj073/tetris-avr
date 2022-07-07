@@ -9,6 +9,8 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/eeprom.h>
+#include <util/delay.h>
 
 #include "settings.h"
 #include "display_matrix_api.h"
@@ -36,13 +38,33 @@ static void init() {
 	tetris_init();
 }
 
-int main() {
-	DEF_PREV_MS(INPUT_POLL_MS) = 0;
-	DEF_PREV_MS(TICK_MS) = 0;
+void standby_screen() {
+	u8* addr = (u8*)0;
+	
+	DMAT_start_write();
+	
+	for (u16 r = 0; r < 32; r++)
+	for (u16 c = 0; c < 16 / 2; c++) {
+		u8 rgb = eeprom_read_byte(addr++);
+		DMAT_set_rgb_bit(r, c, rgb & 7);
+		DMAT_set_rgb_bit(r, c + 16 / 2, rgb >> 3);
+	}
+	
+	DMAT_end_write(DMAT_NCOPY);
+}
 
+int main() {
 	init();
 
 	sei();
+
+	standby_screen();
+	
+	while (!BtN_PRESSED());
+
+	u32 curr = millis();
+	DEF_PREV_MS(INPUT_POLL_MS) = curr;
+	DEF_PREV_MS(TICK_MS) = curr;
 
 	loop {
 		u32 curr = millis();
@@ -55,6 +77,8 @@ int main() {
 		}
 	}
 }
+
+
 
 //int main() {
 	//DMAT_init();
@@ -73,3 +97,33 @@ int main() {
 	//
 	//loop;
 //}
+
+
+#if 0
+// standby screen and eeprom test
+
+#include <avr/eeprom.h>
+
+int main() {
+	DMAT_init();
+	TC2_init();
+	
+	u8* addr = (u8*)0;
+	
+	DMAT_start_write();
+	
+	for (u16 r = 0; r < 32; r++)
+		for (u16 c = 0; c < 16 / 2; c++) {
+			u8 rgb = eeprom_read_byte(addr++);
+			DMAT_set_rgb_bit(r, c, rgb & 7);
+			DMAT_set_rgb_bit(r, c + 16 / 2, rgb >> 3);
+		}
+		
+	DMAT_end_write(DMAT_NCOPY);
+	
+	sei();
+	
+	loop;
+}
+
+#endif // standby screen and eeprom test

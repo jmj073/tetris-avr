@@ -20,7 +20,6 @@
 	
 */
 #define LR_SEMICONT_TERM 500
-
 #define LR_SEMICONT_CONT 75
 
 #define INPUT_POLL_MS 15

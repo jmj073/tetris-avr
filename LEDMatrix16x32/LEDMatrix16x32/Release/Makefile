@@ -37,6 +37,7 @@ SUBDIRS :=
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS +=  \
+../display_matrix_api.c \
 ../interrupts.c \
 ../led_matrix_16x32.c \
 ../main.c \
@@ -51,6 +52,7 @@ ASM_SRCS +=
 
 
 OBJS +=  \
+display_matrix_api.o \
 interrupts.o \
 led_matrix_16x32.o \
 main.o \
@@ -58,6 +60,7 @@ teris.o \
 timer.o
 
 OBJS_AS_ARGS +=  \
+display_matrix_api.o \
 interrupts.o \
 led_matrix_16x32.o \
 main.o \
@@ -65,6 +68,7 @@ teris.o \
 timer.o
 
 C_DEPS +=  \
+display_matrix_api.d \
 interrupts.d \
 led_matrix_16x32.d \
 main.d \
@@ -72,6 +76,7 @@ teris.d \
 timer.d
 
 C_DEPS_AS_ARGS +=  \
+display_matrix_api.d \
 interrupts.d \
 led_matrix_16x32.d \
 main.d \
@@ -92,6 +97,13 @@ LINKER_SCRIPT_DEP+=
 
 
 # AVR32/GNU C Compiler
+./display_matrix_api.o: .././display_matrix_api.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DNDEBUG -DF_CPU=16000000L  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\include"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -Wall -mmcu=atmega128a -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\gcc\dev\atmega128a" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
 ./interrupts.o: .././interrupts.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0

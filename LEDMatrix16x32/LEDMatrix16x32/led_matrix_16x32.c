@@ -40,7 +40,7 @@ static inline void _out_disable() {
 static inline void _tx_section(u8 addr, const u8* RGBs) {
 	_addr(addr);
 	
-	for (uint8_t i = 0; i < LEDMAT_COL; i++) {
+	for (u8 i = 0; i < LEDMAT_COL; i++) {
 		_rgb(*RGBs++);
 		_clock();
 	}
