@@ -40,7 +40,7 @@ int main() {
 	DEF_PREV_MS(INPUT_POLL_MS) = 0;
 	DEF_PREV_MS(TICK_MS) = 0;
 
-	init();	
+	init();
 
 	sei();
 
@@ -55,3 +55,21 @@ int main() {
 		}
 	}
 }
+
+//int main() {
+	//DMAT_init();
+	//TC2_init();
+//
+	//sei();
+	//
+	//DMAT_start_write();
+	//
+	//for (u8 i = 0; i < 16; i++) {
+		//DMAT_set_rgb_bit(i, i, CR | CG | CB);
+		//DMAT_set_rgb_bit(i, 15 - i, CR | CG | CB);
+	//}
+			//
+	//DMAT_end_write(0);
+	//
+	//loop;
+//}

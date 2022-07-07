@@ -10,6 +10,7 @@
 
 #include "pins.h"
 #include "settings.h"
+#define LED16X32_SHORT_MACRO
 #include "display_matrix_api.h"
 #include "timer.h"
 
@@ -54,17 +55,6 @@ static void new_piece() {
 	P = rnum % 7;
 	R = PR = rnum % 4;
 	X = PX = rnum % (10 - NUM(R, 16));
-}
-
-// draw the board and score
-static void frame() {
-	DMAT_start_write();
-	
-	for (i8 r = 0; r < BOARD_ROW; r++)
-		for (i8 c = 0; c < BOARD_COL; c++)
-			DMAT_set_rgb_bit(r, c, BOARD[r][c]);
-
-	DMAT_end_write(0);
 }
 
 // set the value of the board for a particular (x,y,r) piece
@@ -136,11 +126,76 @@ static void rotate_piece() {
 }
 
 
+// drawing mechanism=================================================
+
+// 3
+#define BOARD_START_ROW 3
+// 3
+#define BOARD_START_COL ((DMAT_COL - BOARD_COL) / 2)
+
+// 23
+#define BOARD_END_ROW (BOARD_START_ROW + BOARD_ROW)
+// 13
+#define BOARD_END_COL (BOARD_START_COL + BOARD_COL)
+
+static const u16 DIGITS[10] = {
+	0x7B6F, 0x4924, 0x73E7, 0x79E7, 0x49ED, 0x79CF, 0x7BCF, 0x492F, 0x7BEF, 0x79EF
+};
+
+static inline void draw_digit(u8 row, u8 col, u8 n) {
+	u16 digit = DIGITS[n];
+	
+		for (u8 r = row; r < row + 5; r++)
+			for (u8 c = col; c < col + 3; c++) {
+				DMAT_set_rgb_bit(r, c, digit & 1);
+				digit >>= 1;
+			}
+}
+
+static inline void draw_border() {
+	for (u8 c = BOARD_START_COL - 1; c < BOARD_END_COL + 1; c++) {
+		DMAT_set_rgb_bit(BOARD_START_ROW - 1, c, CG | CR | CB);
+		DMAT_set_rgb_bit(BOARD_END_ROW, c, CG | CR | CB);
+	}
+	
+	for (u8 r = BOARD_START_ROW - 1; r < BOARD_END_ROW + 1; r++) {
+		DMAT_set_rgb_bit(r, BOARD_START_COL - 1, CG | CR | CB);
+		DMAT_set_rgb_bit(r, BOARD_END_COL, CG | CR | CB);
+	}
+}
+
+static inline void draw_board() {
+	for (u8 r = 0; r < BOARD_ROW; r++)
+	for (u8 c = 0; c < BOARD_COL; c++)
+	DMAT_set_rgb_bit(r + BOARD_START_ROW, c + BOARD_START_COL, BOARD[r][c]);
+}
+
+static inline void draw_score() {
+	u16 score = SCORE;
+	for (u8 i = 0; i < 4; i++) {
+		draw_digit(25, 13 - i * 4, score % 10);
+		score /= 10;
+	}
+}
+
+// draw the board and score
+static void frame() {
+	DMAT_start_write();
+	
+	draw_border();
+	draw_board();
+	draw_score();
+
+	DMAT_end_write(DMAT_NCOPY);
+}
+
+// ==================================================================
+
 #define LnR (_BV(LEFT) | _BV(RIGHT))
 void tetris_process_input(u8 input) {
 	static DEF_PREV_DIGITAL_READ(0);
-	static uint32_t PREV_MS_BTN_LR;
-	static uint32_t WAIT_TIME_BTN_LR;
+	static u32 PREV_MS_BTN_LR;
+	static u32 WAIT_TIME_BTN_LR;
 
 	u8 changed = 0;
 	

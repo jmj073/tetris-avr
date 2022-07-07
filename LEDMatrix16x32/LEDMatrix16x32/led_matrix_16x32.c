@@ -5,8 +5,6 @@
  *  Author: JMJ073
  */ 
 
-#define LED16X32_SHORT_MACRO
-
 #include "led_matrix_16x32.h"
 #include <util/delay.h>
 
