@@ -5,7 +5,7 @@
  *  Author: JMJ
  */ 
 
-#include <avr/wdt.h>
+#include <avr/eeprom.h>
 #include <stdlib.h>
 
 #include "pins.h"
@@ -18,13 +18,6 @@
 #define DOWN	BtN_DOWN
 #define LEFT	BtN_LEFT
 #define RIGHT	BtN_RIGHT
-
-#define SW_RESET()		    \
-do                          \
-{                           \
-	wdt_enable(WDTO_15MS);  \
-	for(;;);                \
-} while(0)
 
 // block layout is: {w-1,h-1}{x0,y0}{x1,y1}{x2,y2}{x3,y3} (two bits each)
 
@@ -155,10 +148,10 @@ static inline void draw_board() {
 #define SCORE_ROW (BOARD_END_ROW + 2)
 #define SCORE_COL(i) (DMAT_COL - DMAT_DIGIT_RATIO_W - (i) * (DMAT_DIGIT_RATIO_W + 1))
 
-static inline void draw_score() {
+static inline void draw_score(coord_t row) {
 	u16 score = SCORE;
 	for (u8 i = 0; i < 4; i++) {
-		DMAT_draw_digit_bit(SCORE_ROW, SCORE_COL(i), score % 10, CR, 1);
+		DMAT_draw_digit_bit(row, SCORE_COL(i), score % 10, CR, 1);
 		score /= 10;
 	}
 }
@@ -169,10 +162,40 @@ static void frame() {
 	
 	draw_border();
 	draw_board();
-	draw_score();
+	draw_score(SCORE_ROW);
 
 	DMAT_end_write(DMAT_CLR);
 }
+
+static void draw_screen_from_eeprom(u8* addr) {
+	for (u16 r = 0; r < DMAT_ROW; r++)
+	for (u16 c = 0; c < DMAT_COL / 2; c++) {
+		u8 rgb = eeprom_read_byte(addr++);
+		DMAT_set_rgb_bit(r, c, rgb & 7);
+		DMAT_set_rgb_bit(r, c + DMAT_COL / 2, rgb >> 3);
+	}
+}
+
+#define STANDBY_SCREEN_ADDR		((u8*)0)
+#define GAMEOVER_SCREEN_ADDR	((u8*)(DMAT_ROW * (DMAT_COL / 2)))
+
+static void standby_screen() {
+	DMAT_start_write();
+
+	draw_screen_from_eeprom(STANDBY_SCREEN_ADDR);
+
+	DMAT_end_write(DMAT_CLR);
+}
+
+static void gameover_screen(u16 score) {
+	DMAT_start_write();
+
+	draw_screen_from_eeprom(GAMEOVER_SCREEN_ADDR);
+	draw_score(DMAT_ROW / 2 + 3);
+
+	DMAT_end_write(DMAT_CLR);
+}
+
 
 // ==================================================================
 
@@ -229,9 +252,12 @@ void tetris_process_input(u8 input) {
 	UPDATE_PREV_DIGITAL_READ(0, input);
 }
 
-void tetris_do_tick() {
+u8 tetris_do_tick() {
 	if (check_hit(X, Y + 1, R)) {
-		if (!Y) SW_RESET();
+		if (!Y) {
+			gameover_screen(SCORE);
+			return 0;
+		}
 		remove_line();
 		new_piece();
 	} else {
@@ -240,8 +266,12 @@ void tetris_do_tick() {
 	}
 	
 	frame();
+	
+	return 1;
 }
 
 void tetris_init() {
 	new_piece();
+	standby_screen();
 }
+

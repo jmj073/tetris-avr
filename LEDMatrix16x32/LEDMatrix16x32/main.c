@@ -9,7 +9,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <avr/eeprom.h>
+#include <avr/wdt.h>
 #include <util/delay.h>
 
 #include "settings.h"
@@ -18,6 +18,14 @@
 #include "pins.h"
 #include "tetris.h"
 
+#define SW_RESET()		    \
+do                          \
+{                           \
+	wdt_enable(WDTO_15MS);  \
+	for(;;);                \
+} while(0)
+
+// initilize========================================================
 
 /* refresher */
 static inline void TC2_init() {
@@ -38,27 +46,14 @@ static void init() {
 	tetris_init();
 }
 
-static void standby_screen() {
-	u8* addr = (u8*)0;
-	
-	DMAT_start_write();
-	
-	for (u16 r = 0; r < DMAT_ROW; r++)
-		for (u16 c = 0; c < DMAT_COL / 2; c++) {
-			u8 rgb = eeprom_read_byte(addr++);
-			DMAT_set_rgb_bit(r, c, rgb & 7);
-			DMAT_set_rgb_bit(r, c + 16 / 2, rgb >> 3);
-		}
-	
-	DMAT_end_write(DMAT_NCP);
-}
+// =================================================================
 
 #define COUNT_ROW ((DMAT_ROW - DMAT_DIGIT_RATIO_H * 2) / 2)
 #define COUNT_COL ((DMAT_COL - DMAT_DIGIT_RATIO_W * 2) / 2)
 static void countdown(u8 cnt) {
 	for (u8 i = cnt; i > 0; i--) {
 		DMAT_start_write();
-		DMAT_draw_digit_bit(COUNT_ROW, COUNT_COL + (i == 1 ? -2 : 0), i, CR | CG | CB, 2);
+		DMAT_draw_digit_bit(COUNT_ROW, COUNT_COL, i, CR | CG | CB, 2);
 		DMAT_end_write(DMAT_CLR);
 
 		_delay_ms(1000);
@@ -69,8 +64,7 @@ int main() {
 	init();
 
 	sei();
-
-	standby_screen();
+	_delay_ms(500);
 	while (!BtN_PRESSED());
 	countdown(3);
 
@@ -85,12 +79,16 @@ int main() {
 			tetris_process_input(BtN_PRESSED());
 		}
 		if (TIME_OUT_MSI(curr, TICK_MS)) {
-			tetris_do_tick();
+			if (!tetris_do_tick()) break;
 		}
 	}
+	
+	_delay_ms(1000);
+	while (!BtN_PRESSED());
+	SW_RESET();
 }
 
-
+// TESTS============================================================
 
 #if 0
 // rect draw test

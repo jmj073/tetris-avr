@@ -19,8 +19,8 @@
 	예로 들 수 있다.
 	
 */
-#define LR_SEMICONT_TERM 500
-#define LR_SEMICONT_CONT 75
+#define LR_SEMICONT_TERM 300
+#define LR_SEMICONT_CONT 50
 
 #define INPUT_POLL_MS 15
 #define TICK_MS 300

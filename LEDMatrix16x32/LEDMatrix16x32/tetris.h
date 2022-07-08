@@ -12,7 +12,6 @@
 
 void tetris_init();
 void tetris_process_input(u8 input);
-void tetris_do_tick();
-
+u8 tetris_do_tick();
 
 #endif /* TETRIS_H_ */

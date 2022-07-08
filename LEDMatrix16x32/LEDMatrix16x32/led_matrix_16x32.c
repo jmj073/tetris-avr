@@ -47,7 +47,6 @@ static inline void _tx_section(u8 addr, const u8* RGBs) {
 	
 	_latch();
 }
-
 static inline void LEDMAT_init_port()
 {
 	DDR(LEDMAT_RGB) |= LEDMAT_RGB_ALL;
