@@ -62,7 +62,6 @@ void LEDMAT_init()
 
 void LEDMAT_clear()
 {
-	_out_disable();
 	memset(LEDMAT_BACK_BUF, 0, sizeof(LEDMAT_BACK_BUF));
 }
 

@@ -11,6 +11,9 @@
 
 #include "led_matrix_16x32.h"
 
+/* type for coordinates */
+typedef u8 coord_t;
+
 #define DMAT_ROW	LEDMAT_COL
 #define DMAT_COL	LEDMAT_ROW 
 
@@ -33,20 +36,26 @@
 
 
 // non copy(copy Front Buffer to Back Buffer)
-#define DMAT_NCOPY	_BV(0)
+#define DMAT_NCP	_BV(0)
 // Back Buffer clear
-#define DMAT_CLEAR	_BV(1)
+#define DMAT_CLR	_BV(1)
 static inline void DMAT_end_write(u8 flags) {
 	DMAT_swap_buffer();
 	
-	if (flags & DMAT_CLEAR)
+	if (flags & DMAT_CLR)
 		DMAT_clear();
-	else if (~flags & DMAT_NCOPY) {
+	else if (~flags & DMAT_NCP) {
 		LEDMAT_copy_buffer();
 	}
 }
 
-void DMAT_draw_digit_bit(u8 row, u8 col, u8 n, u8 rgb);
+void DMAT_draw_rect_fill(coord_t r, coord_t c, coord_t h, coord_t w, u8 rgb);
+void DMAT_draw_square_fill(coord_t r, coord_t c, coord_t side_size, u8 rgb);
+
+#define DMAT_DIGIT_RATIO_H 5
+#define DMAT_DIGIT_RATIO_W 3
+// scale = 1, 2, 3, ...
+void DMAT_draw_digit_bit(coord_t row, coord_t col, u8 n, u8 rgb, coord_t scale);
 
 
 #endif /* DISPLAY_MATRIX_API_H_ */

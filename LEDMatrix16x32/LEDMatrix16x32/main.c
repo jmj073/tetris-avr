@@ -38,19 +38,31 @@ static void init() {
 	tetris_init();
 }
 
-void standby_screen() {
+static void standby_screen() {
 	u8* addr = (u8*)0;
 	
 	DMAT_start_write();
 	
-	for (u16 r = 0; r < 32; r++)
-	for (u16 c = 0; c < 16 / 2; c++) {
-		u8 rgb = eeprom_read_byte(addr++);
-		DMAT_set_rgb_bit(r, c, rgb & 7);
-		DMAT_set_rgb_bit(r, c + 16 / 2, rgb >> 3);
-	}
+	for (u16 r = 0; r < DMAT_ROW; r++)
+		for (u16 c = 0; c < DMAT_COL / 2; c++) {
+			u8 rgb = eeprom_read_byte(addr++);
+			DMAT_set_rgb_bit(r, c, rgb & 7);
+			DMAT_set_rgb_bit(r, c + 16 / 2, rgb >> 3);
+		}
 	
-	DMAT_end_write(DMAT_NCOPY);
+	DMAT_end_write(DMAT_NCP);
+}
+
+#define COUNT_ROW ((DMAT_ROW - DMAT_DIGIT_RATIO_H * 2) / 2)
+#define COUNT_COL ((DMAT_COL - DMAT_DIGIT_RATIO_W * 2) / 2)
+static void countdown(u8 cnt) {
+	for (u8 i = cnt; i > 0; i--) {
+		DMAT_start_write();
+		DMAT_draw_digit_bit(COUNT_ROW, COUNT_COL + (i == 1 ? -2 : 0), i, CR | CG | CB, 2);
+		DMAT_end_write(DMAT_CLR);
+
+		_delay_ms(1000);
+	}
 }
 
 int main() {
@@ -59,12 +71,12 @@ int main() {
 	sei();
 
 	standby_screen();
-	
 	while (!BtN_PRESSED());
+	countdown(3);
 
-	u32 curr = millis();
-	DEF_PREV_MS(INPUT_POLL_MS) = curr;
-	DEF_PREV_MS(TICK_MS) = curr;
+	u32 init_value = millis();
+	DEF_PREV_MS(INPUT_POLL_MS) = init_value;
+	DEF_PREV_MS(TICK_MS) = init_value;
 
 	loop {
 		u32 curr = millis();
@@ -80,23 +92,24 @@ int main() {
 
 
 
-//int main() {
-	//DMAT_init();
-	//TC2_init();
-//
-	//sei();
-	//
-	//DMAT_start_write();
-	//
-	//for (u8 i = 0; i < 16; i++) {
-		//DMAT_set_rgb_bit(i, i, CR | CG | CB);
-		//DMAT_set_rgb_bit(i, 15 - i, CR | CG | CB);
-	//}
-			//
-	//DMAT_end_write(0);
-	//
-	//loop;
-//}
+#if 0
+// rect draw test
+
+int main() {
+	DMAT_init();
+	TC2_init();
+
+	DMAT_start_write();
+	DMAT_draw_square_fill(10, 3, 5, CR | CG | CB);
+	DMAT_end_write(0);
+	
+
+	sei();
+
+	loop;
+}
+
+#endif /* rect draw test */
 
 
 #if 0
@@ -119,11 +132,11 @@ int main() {
 			DMAT_set_rgb_bit(r, c + 16 / 2, rgb >> 3);
 		}
 		
-	DMAT_end_write(DMAT_NCOPY);
+	DMAT_end_write(DMAT_NCP);
 	
 	sei();
 	
 	loop;
 }
 
-#endif // standby screen and eeprom test
+#endif /* standby screen and eeprom test */

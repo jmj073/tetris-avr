@@ -77,7 +77,6 @@ static void remove_line() {
 			goto CONTINUE;
 		}
 
-
 		for (i8 i = row - 1; i > 0; i--)
 		memcpy(&BOARD[i + 1][0], &BOARD[i][0], sizeof(**BOARD) * BOARD_COL);
 
@@ -111,6 +110,7 @@ static void land_piece() {
 		Y++;
 		update_piece();
 	}
+	
 	remove_line();
 	new_piece();
 }
@@ -152,10 +152,13 @@ static inline void draw_board() {
 	DMAT_set_rgb_bit(BOARD_START_ROW + r, BOARD_START_COL + c, BOARD[r][c]);
 }
 
+#define SCORE_ROW (BOARD_END_ROW + 2)
+#define SCORE_COL(i) (DMAT_COL - DMAT_DIGIT_RATIO_W - (i) * (DMAT_DIGIT_RATIO_W + 1))
+
 static inline void draw_score() {
 	u16 score = SCORE;
 	for (u8 i = 0; i < 4; i++) {
-		DMAT_draw_digit_bit(25, 13 - i * 4, score % 10, CR);
+		DMAT_draw_digit_bit(SCORE_ROW, SCORE_COL(i), score % 10, CR, 1);
 		score /= 10;
 	}
 }
@@ -168,7 +171,7 @@ static void frame() {
 	draw_board();
 	draw_score();
 
-	DMAT_end_write(DMAT_CLEAR);
+	DMAT_end_write(DMAT_CLR);
 }
 
 // ==================================================================
