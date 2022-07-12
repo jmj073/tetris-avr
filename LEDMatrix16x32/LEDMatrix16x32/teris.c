@@ -51,7 +51,7 @@ static void new_piece() {
 }
 
 // set the value of the board for a particular (x,y,r) piece
-static void set_piece(i8 x, i8 y, i8 r, i8 v) {
+static void set_piece(i8 x, i8 y, i8 r, u8 v) {
 	for (i8 i = 0; i < 8; i += 2)
 		BOARD[NUM(r, i * 2) + y][NUM(r, (i * 2) + 2) + x] = v;
 }
@@ -128,20 +128,20 @@ static void rotate_piece() {
 #define BOARD_END_COL (BOARD_START_COL + BOARD_COL)
 
 static inline void draw_border() {
-	for (u8 c = BOARD_START_COL - 1; c < BOARD_END_COL + 1; c++) {
+	for (coord_t c = BOARD_START_COL - 1; c < BOARD_END_COL + 1; c++) {
 		DMAT_set_rgb_bit(BOARD_START_ROW - 1, c, CG | CR | CB);
 		DMAT_set_rgb_bit(BOARD_END_ROW, c, CG | CR | CB);
 	}
 	
-	for (u8 r = BOARD_START_ROW - 1; r < BOARD_END_ROW + 1; r++) {
+	for (coord_t r = BOARD_START_ROW - 1; r < BOARD_END_ROW + 1; r++) {
 		DMAT_set_rgb_bit(r, BOARD_START_COL - 1, CG | CR | CB);
 		DMAT_set_rgb_bit(r, BOARD_END_COL, CG | CR | CB);
 	}
 }
 
 static inline void draw_board() {
-	for (u8 r = 0; r < BOARD_ROW; r++)
-	for (u8 c = 0; c < BOARD_COL; c++)
+	for (coord_t r = 0; r < BOARD_ROW; r++)
+	for (coord_t c = 0; c < BOARD_COL; c++)
 	DMAT_set_rgb_bit(BOARD_START_ROW + r, BOARD_START_COL + c, BOARD[r][c]);
 }
 
@@ -150,7 +150,7 @@ static inline void draw_board() {
 
 static inline void draw_score(coord_t row) {
 	u16 score = SCORE;
-	for (u8 i = 0; i < 4; i++) {
+	for (coord_t i = 0; i < 4; i++) {
 		DMAT_draw_digit_bit(row, SCORE_COL(i), score % 10, CR, 1);
 		score /= 10;
 	}
@@ -168,8 +168,8 @@ static void frame() {
 }
 
 static void draw_screen_from_eeprom(u8* addr) {
-	for (u16 r = 0; r < DMAT_ROW; r++)
-	for (u16 c = 0; c < DMAT_COL / 2; c++) {
+	for (coord_t r = 0; r < DMAT_ROW; r++)
+	for (coord_t c = 0; c < DMAT_COL / 2; c++) {
 		u8 rgb = eeprom_read_byte(addr++);
 		DMAT_set_rgb_bit(r, c, rgb & 7);
 		DMAT_set_rgb_bit(r, c + DMAT_COL / 2, rgb >> 3);
@@ -270,7 +270,9 @@ u8 tetris_do_tick() {
 	return 1;
 }
 
-void tetris_init() {
+void tetris_init(int seed) {
+	srand(seed);
+	
 	new_piece();
 	standby_screen();
 }

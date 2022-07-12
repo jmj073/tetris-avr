@@ -17,10 +17,9 @@
 	예를 들자면, 키보드로 a를 입력시 a 한글자가 나오고 
 	조금의 텀이 있은 후에 연속으로 a가 나오는 것을
 	예로 들 수 있다.
-	
 */
 #define LR_SEMICONT_TERM 300
-#define LR_SEMICONT_CONT 50
+#define LR_SEMICONT_CONT 60
 
 #define INPUT_POLL_MS 15
 #define TICK_MS 300

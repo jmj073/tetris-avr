@@ -355,7 +355,7 @@ END GROUP
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000      0xcfa
+.text           0x00000000      0xd1a
  *(.vectors)
  .vectors       0x00000000       0x8c C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega128a/avr51/crtatmega128a.o
                 0x00000000                __vector_default
@@ -469,83 +469,86 @@ END GROUP
  .text.LEDMAT_refresh
                 0x00000254       0x64 led_matrix_16x32.o
                 0x00000254                LEDMAT_refresh
+ .text.ADC_read
+                0x000002b8        0xc main.o
+                0x000002b8                ADC_read
  .text.startup.main
-                0x000002b8      0x106 main.o
-                0x000002b8                main
- .text.NUM      0x000003be       0x3c teris.o
+                0x000002c4      0x118 main.o
+                0x000002c4                main
+ .text.NUM      0x000003dc       0x3c teris.o
  .text.set_piece
-                0x000003fa       0x80 teris.o
+                0x00000418       0x80 teris.o
  .text.update_piece
-                0x0000047a       0x30 teris.o
+                0x00000498       0x30 teris.o
  .text.check_hit
-                0x000004aa       0xd0 teris.o
+                0x000004c8       0xd0 teris.o
  .text.remove_line
-                0x0000057a       0xb2 teris.o
+                0x00000598       0xb2 teris.o
  .text.new_piece
-                0x0000062c       0x4c teris.o
+                0x0000064a       0x4c teris.o
  .text.draw_score
-                0x00000678       0x4e teris.o
+                0x00000696       0x4e teris.o
  .text.LEDMAT_set_rgb_bit
-                0x000006c6       0x70 teris.o
+                0x000006e4       0x70 teris.o
  .text.draw_screen_from_eeprom
-                0x00000736       0x60 teris.o
- .text.frame    0x00000796       0xa6 teris.o
+                0x00000754       0x60 teris.o
+ .text.frame    0x000007b4       0xa6 teris.o
  .text.tetris_process_input
-                0x0000083c      0x1e0 teris.o
-                0x0000083c                tetris_process_input
+                0x0000085a      0x1e0 teris.o
+                0x0000085a                tetris_process_input
  .text.tetris_do_tick
-                0x00000a1c       0x52 teris.o
-                0x00000a1c                tetris_do_tick
+                0x00000a3a       0x52 teris.o
+                0x00000a3a                tetris_do_tick
  .text.tetris_init
-                0x00000a6e       0x16 teris.o
-                0x00000a6e                tetris_init
+                0x00000a8c       0x18 teris.o
+                0x00000a8c                tetris_init
  .text.__vector_16
-                0x00000a84       0x8a timer.o
-                0x00000a84                __vector_16
+                0x00000aa4       0x8a timer.o
+                0x00000aa4                __vector_16
  .text.timer0_init
-                0x00000b0e        0xe timer.o
-                0x00000b0e                timer0_init
- .text.millis   0x00000b1c       0x18 timer.o
-                0x00000b1c                millis
+                0x00000b2e        0xe timer.o
+                0x00000b2e                timer0_init
+ .text.millis   0x00000b3c       0x18 timer.o
+                0x00000b3c                millis
  .text.libgcc.div
-                0x00000b34       0x28 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_udivmodhi4.o)
-                0x00000b34                __udivmodhi4
+                0x00000b54       0x28 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_udivmodhi4.o)
+                0x00000b54                __udivmodhi4
  .text.libgcc.div
-                0x00000b5c       0x26 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_divmodhi4.o)
-                0x00000b5c                _div
-                0x00000b5c                __divmodhi4
+                0x00000b7c       0x26 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_divmodhi4.o)
+                0x00000b7c                _div
+                0x00000b7c                __divmodhi4
  .text.avr-libc
-                0x00000b82       0xaa c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr51\libc.a(rand.o)
-                0x00000c0e                rand_r
-                0x00000c10                rand
-                0x00000c16                srand
+                0x00000ba2       0xaa c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr51\libc.a(rand.o)
+                0x00000c2e                rand_r
+                0x00000c30                rand
+                0x00000c36                srand
  .text.avr-libc
-                0x00000c2c       0x10 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega128a/avr51\libatmega128a.a(eerd_byte.o)
-                0x00000c2c                eeprom_read_byte
+                0x00000c4c       0x10 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega128a/avr51\libatmega128a.a(eerd_byte.o)
+                0x00000c4c                eeprom_read_byte
  .text.libgcc.div
-                0x00000c3c       0x28 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_divmodsi4.o)
-                0x00000c3c                __divmodsi4
+                0x00000c5c       0x28 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_divmodsi4.o)
+                0x00000c5c                __divmodsi4
  .text.libgcc.div
-                0x00000c64       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_negsi2.o)
-                0x00000c64                __negsi2
+                0x00000c84       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_negsi2.o)
+                0x00000c84                __negsi2
  .text.libgcc.mul
-                0x00000c74       0x14 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_muluhisi3.o)
-                0x00000c74                __muluhisi3
+                0x00000c94       0x14 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_muluhisi3.o)
+                0x00000c94                __muluhisi3
  .text.libgcc.mul
-                0x00000c88        0xc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_mulshisi3.o)
-                0x00000c88                __mulshisi3
-                0x00000c8c                __mulohisi3
+                0x00000ca8        0xc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_mulshisi3.o)
+                0x00000ca8                __mulshisi3
+                0x00000cac                __mulohisi3
  .text.libgcc.div
-                0x00000c94       0x44 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_udivmodsi4.o)
-                0x00000c94                __udivmodsi4
+                0x00000cb4       0x44 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_udivmodsi4.o)
+                0x00000cb4                __udivmodsi4
  .text.libgcc.mul
-                0x00000cd8       0x1e c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_umulhisi3.o)
-                0x00000cd8                __umulhisi3
-                0x00000cf6                . = ALIGN (0x2)
+                0x00000cf8       0x1e c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_umulhisi3.o)
+                0x00000cf8                __umulhisi3
+                0x00000d16                . = ALIGN (0x2)
  *(.fini9)
- .fini9         0x00000cf6        0x0 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_exit.o)
-                0x00000cf6                _exit
-                0x00000cf6                exit
+ .fini9         0x00000d16        0x0 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_exit.o)
+                0x00000d16                _exit
+                0x00000d16                exit
  *(.fini9)
  *(.fini8)
  *(.fini8)
@@ -564,11 +567,11 @@ END GROUP
  *(.fini1)
  *(.fini1)
  *(.fini0)
- .fini0         0x00000cf6        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_exit.o)
+ .fini0         0x00000d16        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr51\libgcc.a(_exit.o)
  *(.fini0)
-                0x00000cfa                _etext = .
+                0x00000d1a                _etext = .
 
-.data           0x00800100       0x88 load address 0x00000cfa
+.data           0x00800100       0x88 load address 0x00000d1a
                 0x00800100                PROVIDE (__data_start, .)
  *(.data)
  .data          0x00800100        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr51\libc.a(rand.o)
@@ -616,8 +619,8 @@ END GROUP
  COMMON         0x0080026a      0x200 led_matrix_16x32.o
                 0x0080026a                __LEDMAT_BUFFER
                 0x0080046a                PROVIDE (__bss_end, .)
-                0x00000cfa                __data_load_start = LOADADDR (.data)
-                0x00000d82                __data_load_end = (__data_load_start + SIZEOF (.data))
+                0x00000d1a                __data_load_start = LOADADDR (.data)
+                0x00000da2                __data_load_end = (__data_load_start + SIZEOF (.data))
 
 .noinit         0x0080046a        0x0
                 [!provide]                PROVIDE (__noinit_start, .)

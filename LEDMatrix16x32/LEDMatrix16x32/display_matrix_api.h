@@ -17,8 +17,6 @@ typedef u8 coord_t;
 #define DMAT_ROW	LEDMAT_COL
 #define DMAT_COL	LEDMAT_ROW 
 
-#define DMAT_init() LEDMAT_init()
-
 #define DMAT_swap_buffer() LEDMAT_swap_buffer()
 
 /* COLOR FLAG */
@@ -44,9 +42,8 @@ static inline void DMAT_end_write(u8 flags) {
 	
 	if (flags & DMAT_CLR)
 		DMAT_clear();
-	else if (~flags & DMAT_NCP) {
+	else if (~flags & DMAT_NCP)
 		LEDMAT_copy_buffer();
-	}
 }
 
 void DMAT_draw_rect_fill(coord_t r, coord_t c, coord_t h, coord_t w, u8 rgb);

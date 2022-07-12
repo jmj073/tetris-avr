@@ -27,26 +27,43 @@ do                          \
 
 // initilize========================================================
 
-/* refresher */
+/* refresher for LED matrix */
 static inline void TC2_init() {
 	TIMSK |= _BV(TOIE2);
 	TCCR2 |= TC_REFRESH_CLOCK_SELECT;
 }
 
 static inline void BtN_init() {
-	DDR(BtN_PIN) |= BtN_ALL_PINS; // input
+	DDR(BtN_PIN) &= ~BtN_ALL_PINS; // input
 	PORT(BtN_PIN) |= BtN_ALL_PINS; // built-in pull-up
+}
+
+static void ADC_init(uint8_t channel)
+{
+	ADMUX |= _BV(REFS0); // AVCC를 기준 전압으로 선택
+	
+	ADCSRA |= 0x07; // 분주비 설정
+	ADCSRA |= _BV(ADEN); // ADC 활성화
+	
+	ADMUX = ((ADMUX & 0xE0) | channel); // 채널 선택
 }
 
 static void init() {
 	BtN_init();
-	DMAT_init();
+	LEDMAT_init();
 	TC2_init();
 	timer0_init();
-	tetris_init();
+	ADC_init(0);
 }
 
 // =================================================================
+
+int ADC_read()
+{
+	ADCSRA |= _BV(ADSC); // 변환 시작
+	while ( !(ADCSRA & _BV(ADIF)) ); // 변환 대기
+	return ADC;
+}
 
 #define COUNT_ROW ((DMAT_ROW - DMAT_DIGIT_RATIO_H * 2) / 2)
 #define COUNT_COL ((DMAT_COL - DMAT_DIGIT_RATIO_W * 2) / 2)
@@ -62,8 +79,11 @@ static void countdown(u8 cnt) {
 
 int main() {
 	init();
+	
+	tetris_init(ADC_read());
 
 	sei();
+	
 	_delay_ms(500);
 	while (!BtN_PRESSED());
 	countdown(3);
@@ -75,12 +95,10 @@ int main() {
 	loop {
 		u32 curr = millis();
 
-		if (TIME_OUT_MSI(curr, INPUT_POLL_MS)) {
+		if (TIME_OUT_MSI(curr, INPUT_POLL_MS))
 			tetris_process_input(BtN_PRESSED());
-		}
-		if (TIME_OUT_MSI(curr, TICK_MS)) {
+		if (TIME_OUT_MSI(curr, TICK_MS))
 			if (!tetris_do_tick()) break;
-		}
 	}
 	
 	_delay_ms(1000);
@@ -94,7 +112,7 @@ int main() {
 // rect draw test
 
 int main() {
-	DMAT_init();
+	LEDMAT_init();
 	TC2_init();
 
 	DMAT_start_write();
@@ -116,7 +134,7 @@ int main() {
 #include <avr/eeprom.h>
 
 int main() {
-	DMAT_init();
+	LEDMAT_init();
 	TC2_init();
 	
 	u8* addr = (u8*)0;
