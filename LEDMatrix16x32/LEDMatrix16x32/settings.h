@@ -21,12 +21,21 @@
 #define LR_SEMICONT_TERM 300
 #define LR_SEMICONT_CONT 60
 
+/* 
++ main() 참고
++ S/W debouncing을 위해 INPUT_POLL_MS는
+  작지 않게 유지한다.
+*/
 #define INPUT_POLL_MS 15
 #define TICK_MS 300
-#define BtN_LR_MS 200
 
 /* for led matrix refreshing*/ // timer2 OVF
-#define TC_REFRESH_CLOCK_SELECT (_BV(CS21) | _BV(CS20)) // 32
-// using 8-bit Timer/Counter OVF interrupt
+// 32
+#define TC_REFRESH_CLOCK_SELECT (_BV(CS21) | _BV(CS20))
+
+/* 1 ~ 255 */
+#define MIN_LEDMAT_BRIGHTNESS		1U
+#define MAX_LEDMAT_BRIGHTNESS		255U
+#define DEFAULT_LEDMAT_BRIGHTNESS	42U
 
 #endif /* SETTINGS_H_ */

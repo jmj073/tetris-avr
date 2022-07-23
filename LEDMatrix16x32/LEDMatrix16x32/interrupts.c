@@ -8,10 +8,14 @@
 #include <avr/interrupt.h>
 #include "pins.h"
 #include "shortint.h"
-#define LED16X32_SHORT_MACRO
 #include "led_matrix_16x32.h"
 
 /* for LED matrix refresh */
 ISR(TIMER2_OVF_vect) {
-	LMAT_refresh();
+	LEDMAT_refresh();
+}
+
+/* brightness control */
+ISR(TIMER2_COMP_vect) {
+	LEDMAT_OE_disable();
 }

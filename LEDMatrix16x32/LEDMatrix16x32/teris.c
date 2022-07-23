@@ -5,13 +5,11 @@
  *  Author: JMJ
  */ 
 
-#include <avr/eeprom.h>
 #include <stdlib.h>
 
+#include "tetris.h"
 #include "pins.h"
 #include "settings.h"
-#define LED16X32_SHORT_MACRO
-#include "display_matrix_api.h"
 #include "timer.h"
 
 #define UP		BtN_UP
@@ -28,7 +26,7 @@ static u8 X, Y, R, PX, PY, PR, P;
 static u16 SCORE = 0;
 static u8 BOARD[BOARD_ROW][BOARD_COL];
 
-static const i32 block[7][4] = {
+static const i32 BLOCK[7][4] = {
 	{ 431424, 598356, 431424, 598356 },
 	{ 427089, 615696, 427089, 615696 },
 	{ 348480, 348480, 348480, 348480 },
@@ -39,7 +37,7 @@ static const i32 block[7][4] = {
 };
 
 // extract a 2-bit number from a block entry
-static inline i8 NUM(i8 r, i8 y) { return (block[P][r] >> y) & 3; }
+static inline i8 NUM(i8 r, i8 y) { return (BLOCK[P][r] >> y) & 3; }
 
 // create a new piece, don't remove old one (it has landed and should stick)
 static void new_piece() {
@@ -67,7 +65,7 @@ static void remove_line() {
 	for (u8 row = Y; row <= Y + NUM(R, 18); row++) {
 		for (u8 i = 0; i < 10; i++) {
 			if (!BOARD[row][i])
-			goto CONTINUE;
+				goto CONTINUE;
 		}
 
 		for (i8 i = row - 1; i > 0; i--)
@@ -148,7 +146,7 @@ static inline void draw_board() {
 #define SCORE_ROW (BOARD_END_ROW + 2)
 #define SCORE_COL(i) (DMAT_COL - DMAT_DIGIT_RATIO_W - (i) * (DMAT_DIGIT_RATIO_W + 1))
 
-static inline void draw_score(coord_t row) {
+void draw_score(coord_t row) {
 	u16 score = SCORE;
 	for (coord_t i = 0; i < 4; i++) {
 		DMAT_draw_digit_bit(row, SCORE_COL(i), score % 10, CR, 1);
@@ -167,37 +165,14 @@ static void frame() {
 	DMAT_end_write(DMAT_CLR);
 }
 
-static void draw_screen_from_eeprom(u8* addr) {
-	for (coord_t r = 0; r < DMAT_ROW; r++)
-	for (coord_t c = 0; c < DMAT_COL / 2; c++) {
-		u8 rgb = eeprom_read_byte(addr++);
-		DMAT_set_rgb_bit(r, c, rgb & 7);
-		DMAT_set_rgb_bit(r, c + DMAT_COL / 2, rgb >> 3);
-	}
-}
-
-#define STANDBY_SCREEN_ADDR		((u8*)0)
-#define GAMEOVER_SCREEN_ADDR	((u8*)(DMAT_ROW * (DMAT_COL / 2)))
-
-static void standby_screen() {
-	DMAT_start_write();
-
-	draw_screen_from_eeprom(STANDBY_SCREEN_ADDR);
-
-	DMAT_end_write(DMAT_CLR);
-}
-
-static void gameover_screen(u16 score) {
-	DMAT_start_write();
-
-	draw_screen_from_eeprom(GAMEOVER_SCREEN_ADDR);
-	draw_score(DMAT_ROW / 2 + 3);
-
-	DMAT_end_write(DMAT_CLR);
-}
-
-
 // ==================================================================
+
+void tetris_init(int seed) {
+	memset((void*)BOARD, 0, sizeof(BOARD));
+
+	srand(seed);
+	new_piece();
+}
 
 #define LnR (_BV(LEFT) | _BV(RIGHT))
 void tetris_process_input(u8 input) {
@@ -254,10 +229,7 @@ void tetris_process_input(u8 input) {
 
 u8 tetris_do_tick() {
 	if (check_hit(X, Y + 1, R)) {
-		if (!Y) {
-			gameover_screen(SCORE);
-			return 0;
-		}
+		if (!Y) return 0;
 		remove_line();
 		new_piece();
 	} else {
@@ -269,11 +241,3 @@ u8 tetris_do_tick() {
 	
 	return 1;
 }
-
-void tetris_init(int seed) {
-	srand(seed);
-	
-	new_piece();
-	standby_screen();
-}
-

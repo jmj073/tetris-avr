@@ -47,7 +47,7 @@ static inline void _tx_section(u8 addr, const u8* RGBs) {
 	
 	_latch();
 }
-static inline void LEDMAT_init_port()
+static inline void _init_port()
 {
 	DDR(LEDMAT_RGB) |= LEDMAT_RGB_ALL;
 	DDR(LEDMAT_CR) |= LEDMAT_CR_ALL;
@@ -55,7 +55,7 @@ static inline void LEDMAT_init_port()
 
 void LEDMAT_init()
 {
-	LEDMAT_init_port();
+	_init_port();
 	_out_disable();
 }
 
@@ -75,6 +75,15 @@ void LEDMAT_refresh()
 	section = RR(section, LEDMAT_SECTION);
 }
 
+void LEDMAT_OE_disable()
+{
+	_out_disable();
+}
+
+void LEDMAT_OE_enable()
+{
+	_out_enable();
+}
 
 #if 0
 // UNIT TEST

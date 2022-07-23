@@ -8,6 +8,7 @@
  */ 
 
 #include <avr/io.h>
+#include <avr/eeprom.h>
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
 #include <util/delay.h>
@@ -27,10 +28,12 @@ do                          \
 
 // initilize========================================================
 
-/* refresher for LED matrix */
+/* refresher for LED matrix & control brightness */
 static inline void TC2_init() {
 	TIMSK |= _BV(TOIE2);
 	TCCR2 |= TC_REFRESH_CLOCK_SELECT;
+	OCR2 = DEFAULT_LEDMAT_BRIGHTNESS;
+	TIMSK |= _BV(OCIE2);
 }
 
 static inline void BtN_init() {
@@ -65,6 +68,52 @@ int ADC_read()
 	return ADC;
 }
 
+static void set_display_brightness(u8 brightness)
+{
+	if (brightness >= MAX_LEDMAT_BRIGHTNESS)
+		OCR2 = MAX_LEDMAT_BRIGHTNESS;
+	else if (brightness <= MIN_LEDMAT_BRIGHTNESS)
+		OCR2 = MIN_LEDMAT_BRIGHTNESS;
+	else
+		OCR2 = brightness;
+}
+
+static inline u8 get_display_brightness()
+{
+	return OCR2;
+}
+
+// =================================================================
+
+static void draw_screen_from_eeprom(u8* addr) {
+	for (coord_t r = 0; r < DMAT_ROW; r++)
+	for (coord_t c = 0; c < DMAT_COL / 2; c++) {
+		u8 rgb = eeprom_read_byte(addr++);
+		DMAT_set_rgb_bit(r, c, rgb & 7);
+		DMAT_set_rgb_bit(r, c + DMAT_COL / 2, rgb >> 3);
+	}
+}
+
+#define STANDBY_SCREEN_ADDR		((u8*)0)
+#define GAMEOVER_SCREEN_ADDR	((u8*)(DMAT_ROW * (DMAT_COL / 2)))
+
+static void standby_screen() {
+	DMAT_start_write();
+
+	draw_screen_from_eeprom(STANDBY_SCREEN_ADDR);
+
+	DMAT_end_write(DMAT_CLR);
+}
+
+static void gameover_screen() {
+	DMAT_start_write();
+
+	draw_screen_from_eeprom(GAMEOVER_SCREEN_ADDR);
+	draw_score(DMAT_ROW / 2 + 3);
+
+	DMAT_end_write(DMAT_CLR);
+}
+
 #define COUNT_ROW ((DMAT_ROW - DMAT_DIGIT_RATIO_H * 2) / 2)
 #define COUNT_COL ((DMAT_COL - DMAT_DIGIT_RATIO_W * 2) / 2)
 static void countdown(u8 cnt) {
@@ -77,21 +126,45 @@ static void countdown(u8 cnt) {
 	}
 }
 
-int main() {
-	init();
+static void standby_screen_process_input() {
+	loop {
+		u8 input = BtN_PRESSED();
+		
+		
+		if (input & _BV(BtN_UP)) {
+			u8 brightness = get_display_brightness();
+			if (brightness < MAX_LEDMAT_BRIGHTNESS)
+				set_display_brightness(brightness + 1);
+		}
+		if (input & _BV(BtN_DOWN)) {
+			u8 brightness = get_display_brightness();
+			if (brightness > MIN_LEDMAT_BRIGHTNESS)
+				set_display_brightness(brightness - 1);
+		}
+		if (input & _BV(BtN_RIGHT)) {
+			break;
+		}
+		
+		_delay_ms(10);
+	}
+}
+
+static void run()
+{
+	DEF_PREV_MS(INPUT_POLL_MS);
+	DEF_PREV_MS(TICK_MS);
 	
 	tetris_init(ADC_read());
-
-	sei();
+	standby_screen();
 	
 	_delay_ms(500);
-	while (!BtN_PRESSED());
+	standby_screen_process_input();
 	countdown(3);
-
+	
 	u32 init_value = millis();
-	DEF_PREV_MS(INPUT_POLL_MS) = init_value;
-	DEF_PREV_MS(TICK_MS) = init_value;
-
+	PREV_MS(INPUT_POLL_MS) = init_value;
+	PREV_MS(TICK_MS) = init_value;
+	
 	loop {
 		u32 curr = millis();
 
@@ -101,10 +174,60 @@ int main() {
 			if (!tetris_do_tick()) break;
 	}
 	
+	gameover_screen();
+	
+	_delay_ms(1000);
+	while (!BtN_PRESSED());
+}
+
+int main()
+{
+	init();
+	standby_screen();
+	
+	sei();
+	
+	loop {
+		run();
+	}
+}
+
+#if 0
+
+int main() {
+	DEF_PREV_MS(INPUT_POLL_MS);
+	DEF_PREV_MS(TICK_MS);
+	
+	init();
+	tetris_init(ADC_read());
+	standby_screen();
+	sei();
+	
+	_delay_ms(500);
+	standby_screen_process_input();
+	countdown(3);
+
+	u32 init_value = millis();
+	PREV_MS(INPUT_POLL_MS) = init_value;
+	PREV_MS(TICK_MS) = init_value;
+	
+	loop {
+		u32 curr = millis();
+
+		if (TIME_OUT_MSI(curr, INPUT_POLL_MS))
+			tetris_process_input(BtN_PRESSED());
+		if (TIME_OUT_MSI(curr, TICK_MS))
+			if (!tetris_do_tick()) break;
+	}
+	
+	gameover_screen();
+	
 	_delay_ms(1000);
 	while (!BtN_PRESSED());
 	SW_RESET();
 }
+
+#endif
 
 // TESTS============================================================
 

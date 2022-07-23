@@ -71,9 +71,9 @@
 #define OE		_BV(LEDMAT_OE)
 
 /* COLOR FLAG */
-#define CR _BV(0)
-#define CG _BV(1)
-#define CB _BV(2)
+//#define CR _BV(0)
+//#define CG _BV(1)
+//#define CB _BV(2)
 
 /* functions */
 #define LMAT_init			LEDMAT_init
@@ -101,11 +101,24 @@ void LEDMAT_clear();
 
 void LEDMAT_refresh();
 
+/*
++ OE: Output Enable
+	+ LEDMAT_refresh() 함수는 OE를 enable 시킨다는 것에 주의.
+	+ 밝기 조절에 사용 가능하다.
+	+ 출력이 안되게 하고 싶다면 refresh 함수가 호출되지 않도록 하고
+	  LEDMAT_OE_disable()을 호출해야 한다.
+*/
+void LEDMAT_OE_disable();
+void LEDMAT_OE_enable();
+
+
+
 
 static inline void LEDMAT_swap_buffer()
 {
 	__LEDMAT_CURR_BUF ^= 1;
 }
+
 static inline void LEDMAT_copy_buffer()
 {
 	memcpy(LEDMAT_BACK_BUF, LEDMAT_FRONT_BUF, sizeof(LEDMAT_BACK_BUF));
@@ -123,6 +136,7 @@ static inline void LEDMAT_set_rgb_bit(u8 r, u8 c, u8 rgb)
 		| ((rgb << 3) & LEDMAT_RGB2);
 	}
 }
+
 static inline u8 LEDMAT_get_rgb_bit(u8 r, u8 c)
 {
 	return r < 8 ?
