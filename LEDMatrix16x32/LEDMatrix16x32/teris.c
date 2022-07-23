@@ -12,12 +12,12 @@
 #include "settings.h"
 #include "timer.h"
 
-#define UP		BtN_UP
-#define DOWN	BtN_DOWN
-#define LEFT	BtN_LEFT
-#define RIGHT	BtN_RIGHT
+#define UP		_BV(BtN_UP)
+#define DOWN	_BV(BtN_DOWN)
+#define LEFT	_BV(BtN_LEFT)
+#define RIGHT	_BV(BtN_RIGHT)
 
-// block layout is: {w-1,h-1}{x0,y0}{x1,y1}{x2,y2}{x3,y3} (two bits each)
+// block layout is: {w-1,h-1}{x0,y0}{x1,y1}{x2,y2}{x3,y3} (two bits each, total 20 bits)
 
 #define BOARD_ROW	20
 #define BOARD_COL	10
@@ -26,7 +26,7 @@ static u8 X, Y, R, PX, PY, PR, P;
 static u16 SCORE = 0;
 static u8 BOARD[BOARD_ROW][BOARD_COL];
 
-static const i32 BLOCK[7][4] = {
+static const u32 BLOCK[7][4] = {
 	{ 431424, 598356, 431424, 598356 },
 	{ 427089, 615696, 427089, 615696 },
 	{ 348480, 348480, 348480, 348480 },
@@ -37,7 +37,7 @@ static const i32 BLOCK[7][4] = {
 };
 
 // extract a 2-bit number from a block entry
-static inline i8 NUM(i8 r, i8 y) { return (BLOCK[P][r] >> y) & 3; }
+static inline i8 NUM(i8 r, i8 n) { return (BLOCK[P][r] >> n) & 3; }
 
 // create a new piece, don't remove old one (it has landed and should stick)
 static void new_piece() {
@@ -45,7 +45,7 @@ static void new_piece() {
 	Y = PY = 0;
 	P = rnum % 7;
 	R = PR = rnum % 4;
-	X = PX = rnum % (10 - NUM(R, 16));
+	X = PX = rnum % (BOARD_COL - NUM(R, 16));
 }
 
 // set the value of the board for a particular (x,y,r) piece
@@ -69,7 +69,7 @@ static void remove_line() {
 		}
 
 		for (i8 i = row - 1; i > 0; i--)
-		memcpy(&BOARD[i + 1][0], &BOARD[i][0], sizeof(**BOARD) * BOARD_COL);
+			memcpy(&BOARD[i + 1][0], &BOARD[i][0], sizeof(**BOARD) * BOARD_COL);
 
 		//memset(&board[0][0], 0, 10);
 		SCORE++;
@@ -106,8 +106,8 @@ static void land_piece() {
 	new_piece();
 }
 
-static void rotate_piece() {
-	R = RR(R, 4);
+static void rotate_piece(u8 flag) {
+	R = (flag == LEFT)  ? LR(R, 4) : RR(R, 4);
 	while (X + NUM(R, 16) > 9)
 		X--;
 	if (check_hit(X, Y, R)) {
@@ -174,7 +174,7 @@ void tetris_init(int seed) {
 	new_piece();
 }
 
-#define LnR (_BV(LEFT) | _BV(RIGHT))
+#define LnR (LEFT | RIGHT)
 void tetris_process_input(u8 input) {
 	static DEF_PREV_DIGITAL_READ(0);
 	static u32 PREV_MS_BTN_LR;
@@ -189,7 +189,7 @@ void tetris_process_input(u8 input) {
 		WAIT_TIME_BTN_LR = LR_SEMICONT_TERM;
 		PREV_MS_BTN_LR = millis();
 
-		if (input & _BV(LEFT))
+		if (input & LEFT)
 			X > 0 && !check_hit(X - 1, Y, R) && X--;
 		else
 			X + NUM(R, 16) < 9 && !check_hit(X + 1, Y, R) && X++;
@@ -202,7 +202,7 @@ void tetris_process_input(u8 input) {
 		if (TIME_OUTI(curr, PREV_MS_BTN_LR, WAIT_TIME_BTN_LR)) {
 			WAIT_TIME_BTN_LR = LR_SEMICONT_CONT;
 
-			if (input & _BV(LEFT))
+			if (input & LEFT)
 				X > 0 && !check_hit(X - 1, Y, R) && X--;
 			else
 				X + NUM(R, 16) < 9 && !check_hit(X + 1, Y, R) && X++;
@@ -212,12 +212,17 @@ void tetris_process_input(u8 input) {
 	}
 	
 	/* UP: rotate */
-	if ( IS_RISING(0, input, _BV(UP)) )
-		rotate_piece(), changed = 1;
+	if ( IS_RISING(0, input, UP) )
+		rotate_piece(RIGHT), changed = 1;
 
 	/* DOWN: land */
-	if ( IS_RISING(0, input, _BV(DOWN)) )
+	if ( IS_RISING(0, input, DOWN) ) {
+#ifdef LAND_CONTROL
 		land_piece(), changed = 1;
+#else
+		rotate_piece(LEFT), changed = 1;
+#endif
+	}
 	
 	if (changed) {
 		update_piece();

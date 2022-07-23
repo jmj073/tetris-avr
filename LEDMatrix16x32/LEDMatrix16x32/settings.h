@@ -38,4 +38,11 @@
 #define MAX_LEDMAT_BRIGHTNESS		255U
 #define DEFAULT_LEDMAT_BRIGHTNESS	42U
 
+
+/*
+ifdef LAND_CONTROL => DOWN KEY: land piece
+else  => DONW KEY: left rotate piece
+*/
+//#define LAND_CONTROL
+
 #endif /* SETTINGS_H_ */
