@@ -2,7 +2,8 @@
  * teris.c
  *
  * Created: 2022-07-05 22:09:27
- *  Author: JMJ
+ * Author: JMJ
+ * Tetris original source code: https://github.com/taylorconor/tinytetris
  */ 
 
 #include <stdlib.h>
@@ -39,6 +40,7 @@ static const u32 BLOCK[7][4] = {
 // extract a 2-bit number from a block entry
 static inline i8 NUM(i8 r, i8 n) { return (BLOCK[P][r] >> n) & 3; }
 
+
 // create a new piece, don't remove old one (it has landed and should stick)
 static void new_piece() {
 	int rnum = rand();
@@ -63,10 +65,9 @@ static void update_piece() {
 // remove line(s) from the board if they're full
 static void remove_line() {
 	for (u8 row = Y; row <= Y + NUM(R, 18); row++) {
-		for (u8 i = 0; i < 10; i++) {
-			if (!BOARD[row][i])
-				goto CONTINUE;
-		}
+		
+		for (u8 i = 0; i < BOARD_COL; i++)
+			if (!BOARD[row][i]) goto CONTINUE;
 
 		for (i8 i = row - 1; i > 0; i--)
 			memcpy(&BOARD[i + 1][0], &BOARD[i][0], sizeof(**BOARD) * BOARD_COL);
@@ -96,26 +97,32 @@ static u8 check_hit(i8 x, i8 y, i8 r) {
 	return is_hit;
 }
 
-static void land_piece() {
-	while (!check_hit(X, Y + 1, R)) {
-		Y++;
-		update_piece();
-	}
-	
-	remove_line();
-	new_piece();
-}
+//static void drop_piece() {
+	//while (!check_hit(X, Y + 1, R)) {
+		//Y++;
+		//update_piece();
+	//}
+	//
+	//remove_line();
+	//new_piece();
+//}
 
 static void rotate_piece(u8 flag) {
 	R = (flag == LEFT)  ? LR(R, 4) : RR(R, 4);
-	while (X + NUM(R, 16) > 9)
-		X--;
+	while (X + NUM(R, 16) > 9) X--;
 	if (check_hit(X, Y, R)) {
 		X = PX;
 		R = PR;
 	}
 }
 
+static void move_piece(u8 flag)
+{
+	if (flag & LEFT)
+		(void)(X > 0 && !check_hit(X - 1, Y, R) && X--);
+	else
+		(void)(X + NUM(R, 16) < 9 && !check_hit(X + 1, Y, R) && X++);
+}
 
 // drawing mechanism=================================================
 
@@ -155,28 +162,23 @@ void draw_score(coord_t row) {
 }
 
 // draw the board and score
-static void frame() {
-	DMAT_start_write();
+static void frame()
+{
+	DMAT_clear();
 	
 	draw_border();
 	draw_board();
 	draw_score(SCORE_ROW);
 
-	DMAT_end_write(DMAT_CLR);
+	DMAT_update(0);
 }
 
 // ==================================================================
 
-void tetris_init(int seed) {
-	memset((void*)BOARD, 0, sizeof(BOARD));
-
-	srand(seed);
-	new_piece();
-}
-
 #define LnR (LEFT | RIGHT)
-void tetris_process_input(u8 input) {
-	static DEF_PREV_DIGITAL_READ(0);
+static u8 PREV_INPUT;
+void tetris_process_input(u8 input)
+{
 	static u32 PREV_MS_BTN_LR;
 	static u32 WAIT_TIME_BTN_LR;
 
@@ -185,54 +187,43 @@ void tetris_process_input(u8 input) {
 	/* LEFT & RIGHT: horizontal move */
 	if ((LnR & input) == LnR) input &= ~LnR;
 
-	if ( IS_RISING(0, input, LnR) ) {
+	if ( ~PREV_INPUT & input & LnR ) {
 		WAIT_TIME_BTN_LR = LR_SEMICONT_TERM;
 		PREV_MS_BTN_LR = millis();
 
-		if (input & LEFT)
-			X > 0 && !check_hit(X - 1, Y, R) && X--;
-		else
-			X + NUM(R, 16) < 9 && !check_hit(X + 1, Y, R) && X++;
+		move_piece(input);
 		
 		changed = 1;
 	}
-	else if ( IS_HIGH(input, LnR) ) {
+	else if ( input & LnR ) {
 		u32 curr = millis();
 		
 		if (TIME_OUTI(curr, PREV_MS_BTN_LR, WAIT_TIME_BTN_LR)) {
 			WAIT_TIME_BTN_LR = LR_SEMICONT_CONT;
-
-			if (input & LEFT)
-				X > 0 && !check_hit(X - 1, Y, R) && X--;
-			else
-				X + NUM(R, 16) < 9 && !check_hit(X + 1, Y, R) && X++;
-			
+			move_piece(input);
 			changed = 1;
 		}
 	}
 	
-	/* UP: rotate */
-	if ( IS_RISING(0, input, UP) )
+	/* UP: rotate to the right */
+	if ( ~PREV_INPUT & input & UP )
 		rotate_piece(RIGHT), changed = 1;
 
-	/* DOWN: land */
-	if ( IS_RISING(0, input, DOWN) ) {
-#ifdef LAND_CONTROL
-		land_piece(), changed = 1;
-#else
+	/* DOWN: rotate to the left */
+	if ( ~PREV_INPUT & input & DOWN ) {
 		rotate_piece(LEFT), changed = 1;
-#endif
 	}
 	
 	if (changed) {
 		update_piece();
 		frame();
 	}
-
-	UPDATE_PREV_DIGITAL_READ(0, input);
+	
+	PREV_INPUT = input;
 }
 
-u8 tetris_do_tick() {
+u8 tetris_do_tick()
+{
 	if (check_hit(X, Y + 1, R)) {
 		if (!Y) return 0;
 		remove_line();
@@ -245,4 +236,14 @@ u8 tetris_do_tick() {
 	frame();
 	
 	return 1;
+}
+
+void tetris_init(int seed)
+{
+	srand(seed);
+	
+	memset((void*)BOARD, 0, sizeof(BOARD));
+	new_piece();
+	SCORE = 0;
+	PREV_INPUT = 0;
 }

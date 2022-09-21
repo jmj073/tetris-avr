@@ -3,7 +3,7 @@
  *
  * Created: 2022-06-30 10:24:24
  * Author : JMJ
- * Version: 1.0
+ * Version: 2.0
  */ 
 
 #ifndef MY_UTIL_H
@@ -35,7 +35,6 @@
 // control statement==================================
 
 #define loop for(;;)
-#define check_ret(bool, ...) if (bool) return __VA_ARGS__
 
 // PIN================================================
 
@@ -50,35 +49,13 @@
 #define DDR(pin)	((pin)[1])
 #define PORT(pin)	((pin)[2])
 
-// etc================================================
-
-/* 
-**for software debouncing**
-
-	+ arguments:
-		source, flag, delay
-
-	+ example:
-		double_check(PINB, 0x01, 20)
-
-*/
-#define double_check(s, f, delay) (\
-	((s) & (f)) &&\
-	( _delay_ms(delay), ((s) & (f)) )\
-)
+// etc==================================================
 
 #define min(a, b) \
 ({ \
 	typeof(a) _a = (a); \
 	typeof(b) _b = (b); \
 	(_a < _b ? _a : _b); \
-})
-
-#define round_align(dst, divisor) \
-({ \
-	typeof(dst) a = (dst); \
-	typeof(divisor) b = (divisor); \
-	((a + b - 1) / b) * b; \
 })
 
 /* right rotate */

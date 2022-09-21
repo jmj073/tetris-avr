@@ -38,6 +38,8 @@
 
 void timer0_init();
 
+void timer0_inc_tick();
+
 uint32_t millis();
 
 

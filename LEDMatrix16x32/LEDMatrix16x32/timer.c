@@ -11,7 +11,7 @@
 static volatile uint32_t timer0_millis;
 static volatile uint16_t timer0_fract;
 
-ISR(TIMER0_OVF_vect) {
+void timer0_inc_tick() {
 	uint32_t m = timer0_millis;
 	uint16_t f = timer0_fract;
 	

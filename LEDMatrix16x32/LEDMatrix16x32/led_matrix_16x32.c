@@ -8,8 +8,11 @@
 #include "led_matrix_16x32.h"
 #include <util/delay.h>
 
-u8 __LEDMAT_BUFFER[2][LEDMAT_SECTION][LEDMAT_COL];
-u8 __LEDMAT_CURR_BUF = 0;
+static u8 __LEDMAT_BUFFER[2][LEDMAT_SECTION][LEDMAT_COL];
+static u8 __LEDMAT_CURR_BUF = 0;
+
+#define LEDMAT_FRONT_BUF (__LEDMAT_BUFFER[__LEDMAT_CURR_BUF])
+#define LEDMAT_BACK_BUF (__LEDMAT_BUFFER[__LEDMAT_CURR_BUF ^ 1])
 
 static inline void _addr(u8 addr) {
 	PORT(LEDMAT_CR) = (PORT(LEDMAT_CR) & ~0x07) | (addr & 0x07);
@@ -59,9 +62,39 @@ void LEDMAT_init()
 	_out_disable();
 }
 
-void LEDMAT_clear()
+void LEDMAT_swap_buffer()
 {
-	memset(LEDMAT_BACK_BUF, 0, sizeof(LEDMAT_BACK_BUF));
+	__LEDMAT_CURR_BUF ^= 1;
+}
+
+void LEDMAT_copy_buffer()
+{
+	memcpy(LEDMAT_BACK_BUF, LEDMAT_FRONT_BUF, sizeof(LEDMAT_BACK_BUF));
+}
+
+void LEDMAT_set_rgb_bit(u8 r, u8 c, u8 rgb)
+{
+	if (r < 8) {
+		LEDMAT_BACK_BUF[r][c]
+		= (LEDMAT_BACK_BUF[r][c] & ~LEDMAT_RGB1)
+		| (rgb & LEDMAT_RGB1);
+	} else {
+		LEDMAT_BACK_BUF[r & 7][c]
+		= (LEDMAT_BACK_BUF[r & 7][c] & ~LEDMAT_RGB2)
+		| ((rgb << 3) & LEDMAT_RGB2);
+	}
+}
+
+u8 LEDMAT_get_rgb_bit(u8 r, u8 c)
+{
+	return r < 8 ?
+	LEDMAT_BACK_BUF[r][c] & LEDMAT_RGB1:
+	LEDMAT_BACK_BUF[r & 7][c] >> 3;
+}
+
+void LEDMAT_fill_rgb_bit(u8 rgb)
+{
+	memset(LEDMAT_BACK_BUF, rgb, sizeof(LEDMAT_BACK_BUF));
 }
 
 void LEDMAT_refresh()
@@ -85,8 +118,19 @@ void LEDMAT_OE_enable()
 	_out_enable();
 }
 
+
+
+
+
+
+
+
+
+
+
+
+// UNIT TEST=======================================================================
 #if 0
-// UNIT TEST
 
 #include <avr/interrupt.h>
 

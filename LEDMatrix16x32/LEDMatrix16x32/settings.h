@@ -27,22 +27,21 @@
   작지 않게 유지한다.
 */
 #define INPUT_POLL_MS 15
-#define TICK_MS 300
+
+#define LEVEL_CHANGE_MS		150
+
+// MIN_LVEL은 0으로 고정
+#define MAX_LEVEL			16
+#define DEFAULT_LEVEL		0
+
+#define LEVEL_BAR_COLOR		(CG | CB)
 
 /* for led matrix refreshing*/ // timer2 OVF
-// 32
-#define TC_REFRESH_CLOCK_SELECT (_BV(CS21) | _BV(CS20))
+#define TC_REFRESH_CLOCK_SELECT (_BV(CS21) | _BV(CS20)) // 32
 
 /* 1 ~ 255 */
 #define MIN_LEDMAT_BRIGHTNESS		1U
 #define MAX_LEDMAT_BRIGHTNESS		255U
 #define DEFAULT_LEDMAT_BRIGHTNESS	42U
-
-
-/*
-ifdef LAND_CONTROL => DOWN KEY: land piece
-else  => DONW KEY: left rotate piece
-*/
-//#define LAND_CONTROL
 
 #endif /* SETTINGS_H_ */

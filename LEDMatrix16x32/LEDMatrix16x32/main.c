@@ -3,8 +3,6 @@
  *
  * Created: 2022-06-29 15:34:49
  * Author : JMJ073
- * 
- * Tetris original source code: https://github.com/taylorconor/tinytetris
  */ 
 
 #include <avr/io.h>
@@ -19,24 +17,19 @@
 #include "pins.h"
 #include "tetris.h"
 
-#define SW_RESET()		    \
-do                          \
-{                           \
-	wdt_enable(WDTO_15MS);  \
-	for(;;);                \
-} while(0)
-
 // initilize========================================================
 
 /* refresher for LED matrix & control brightness */
-static inline void TC2_init() {
+static inline void timer2_init()
+{
 	TIMSK |= _BV(TOIE2);
 	TCCR2 |= TC_REFRESH_CLOCK_SELECT;
 	OCR2 = DEFAULT_LEDMAT_BRIGHTNESS;
 	TIMSK |= _BV(OCIE2);
 }
 
-static inline void BtN_init() {
+static inline void BtN_init()
+{
 	DDR(BtN_PIN) &= ~BtN_ALL_PINS; // input
 	PORT(BtN_PIN) |= BtN_ALL_PINS; // built-in pull-up
 }
@@ -51,10 +44,11 @@ static void ADC_init(uint8_t channel)
 	ADMUX = ((ADMUX & 0xE0) | channel); // 채널 선택
 }
 
-static void init() {
+static void init()
+{
 	BtN_init();
 	LEDMAT_init();
-	TC2_init();
+	timer2_init();
 	timer0_init();
 	ADC_init(0);
 }
@@ -83,9 +77,19 @@ static inline u8 get_display_brightness()
 	return OCR2;
 }
 
-// =================================================================
+// ~next level~
+#define NEXT_LEVEL(level) (((level) + 1) % (MAX_LEVEL + 1))
 
-static void draw_screen_from_eeprom(u8* addr) {
+_Static_assert(15 * MAX_LEVEL < 300, "nope");
+static inline u32 level_to_tick(u8 level)
+{
+	return 300 - 17 * level;
+}
+
+// draw=============================================================
+
+static void draw_screen_from_eeprom(u8* addr)
+{
 	for (coord_t r = 0; r < DMAT_ROW; r++)
 	for (coord_t c = 0; c < DMAT_COL / 2; c++) {
 		u8 rgb = eeprom_read_byte(addr++);
@@ -97,49 +101,76 @@ static void draw_screen_from_eeprom(u8* addr) {
 #define STANDBY_SCREEN_ADDR		((u8*)0)
 #define GAMEOVER_SCREEN_ADDR	((u8*)(DMAT_ROW * (DMAT_COL / 2)))
 
-static void standby_screen() {
-	DMAT_start_write();
-
+static inline void standby_screen()
+{
 	draw_screen_from_eeprom(STANDBY_SCREEN_ADDR);
-
-	DMAT_end_write(DMAT_CLR);
 }
 
-static void gameover_screen() {
-	DMAT_start_write();
+static void gameover_screen()
+{
 
 	draw_screen_from_eeprom(GAMEOVER_SCREEN_ADDR);
 	draw_score(DMAT_ROW / 2 + 3);
 
-	DMAT_end_write(DMAT_CLR);
+	DMAT_update(0);
+}
+
+#define LEVEL_ROW	0
+#define LEVEL_COL	0
+
+static void draw_level_bar(u8 level)
+{
+	coord_t	col = 0;
+
+	for (; col < level; col++)
+		DMAT_set_rgb_bit(LEVEL_ROW, LEVEL_COL + col, LEVEL_BAR_COLOR);
+	for (; col < MAX_LEVEL; col++)
+		DMAT_set_rgb_bit(LEVEL_ROW, LEVEL_COL + col, 0);
 }
 
 #define COUNT_ROW ((DMAT_ROW - DMAT_DIGIT_RATIO_H * 2) / 2)
 #define COUNT_COL ((DMAT_COL - DMAT_DIGIT_RATIO_W * 2) / 2)
-static void countdown(u8 cnt) {
+static void countdown(u8 cnt)
+{
 	for (u8 i = cnt; i > 0; i--) {
-		DMAT_start_write();
+		DMAT_clear();
 		DMAT_draw_digit_bit(COUNT_ROW, COUNT_COL, i, CR | CG | CB, 2);
-		DMAT_end_write(DMAT_CLR);
+		DMAT_update(0);
 
 		_delay_ms(1000);
 	}
 }
 
-static void standby_screen_process_input() {
+// =================================================================
+
+static u32 menu()
+{
+	DEF_PREV_MS(LEVEL_CHANGE_MS) = 0;
+	u8 curr_level = DEFAULT_LEVEL;
+	
+	standby_screen();
+	draw_level_bar(curr_level);
+	DMAT_update(DMAT_CP);
+
 	loop {
 		u8 input = BtN_PRESSED();
-		
 		
 		if (input & _BV(BtN_UP)) {
 			u8 brightness = get_display_brightness();
 			if (brightness < MAX_LEDMAT_BRIGHTNESS)
-				set_display_brightness(brightness + 1);
+			set_display_brightness(brightness + 1);
 		}
 		if (input & _BV(BtN_DOWN)) {
 			u8 brightness = get_display_brightness();
 			if (brightness > MIN_LEDMAT_BRIGHTNESS)
-				set_display_brightness(brightness - 1);
+			set_display_brightness(brightness - 1);
+		}
+		if (input & _BV(BtN_LEFT)) {
+			u32 curr_ms = millis();
+			if (TIME_OUT_MSA(curr_ms, LEVEL_CHANGE_MS)) {
+				draw_level_bar(curr_level = NEXT_LEVEL(curr_level));
+				DMAT_update(0);
+			}
 		}
 		if (input & _BV(BtN_RIGHT)) {
 			break;
@@ -147,92 +178,111 @@ static void standby_screen_process_input() {
 		
 		_delay_ms(10);
 	}
+	
+	return level_to_tick(curr_level);
+}
+
+static void gameover()
+{
+	gameover_screen();
+	
+	_delay_ms(1000);
+	while (!BtN_PRESSED());
 }
 
 static void run()
 {
 	DEF_PREV_MS(INPUT_POLL_MS);
-	DEF_PREV_MS(TICK_MS);
-	
+	u32 TICK_PREV, TICK;
+
 	tetris_init(ADC_read());
-	standby_screen();
-	
+
 	_delay_ms(500);
-	standby_screen_process_input();
+	TICK = menu();
+
 	countdown(3);
-	
+
 	u32 init_value = millis();
-	PREV_MS(INPUT_POLL_MS) = init_value;
-	PREV_MS(TICK_MS) = init_value;
-	
+	PREV_MS(INPUT_POLL_MS) = init_value - INPUT_POLL_MS;
+	TICK_PREV = init_value - TICK;
+
 	loop {
 		u32 curr = millis();
 
 		if (TIME_OUT_MSI(curr, INPUT_POLL_MS))
 			tetris_process_input(BtN_PRESSED());
-		if (TIME_OUT_MSI(curr, TICK_MS))
+
+		if (TIME_OUTI(curr, TICK_PREV, TICK))
 			if (!tetris_do_tick()) break;
 	}
-	
-	gameover_screen();
-	
-	_delay_ms(1000);
-	while (!BtN_PRESSED());
+
+	gameover();
+
 }
 
 int main()
 {
 	init();
-	standby_screen();
-	
 	sei();
-	
-	loop {
-		run();
-	}
+	loop run();
 }
 
-#if 0
 
-int main() {
-	DEF_PREV_MS(INPUT_POLL_MS);
-	DEF_PREV_MS(TICK_MS);
-	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// TESTS==================================================================================
+
+
+#if 0 /* draw level bar test */
+
+int main()
+{
 	init();
-	tetris_init(ADC_read());
-	standby_screen();
+	
 	sei();
-	
-	_delay_ms(500);
-	standby_screen_process_input();
-	countdown(3);
 
-	u32 init_value = millis();
-	PREV_MS(INPUT_POLL_MS) = init_value;
-	PREV_MS(TICK_MS) = init_value;
+	DEF_PREV_MS(LEVEL_CHANGE_MS) = 0;
+	u8 curr_level = DEFAULT_LEVEL;
 	
+	standby_screen();
+	draw_level_bar(curr_level);
+	DMAT_update(0);
+
 	loop {
-		u32 curr = millis();
-
-		if (TIME_OUT_MSI(curr, INPUT_POLL_MS))
-			tetris_process_input(BtN_PRESSED());
-		if (TIME_OUT_MSI(curr, TICK_MS))
-			if (!tetris_do_tick()) break;
+		u8 input = BtN_PRESSED();
+		
+		if (input & _BV(BtN_LEFT)) {
+			u32 curr_ms = millis();
+			if (TIME_OUT_MSA(curr_ms, LEVEL_CHANGE_MS)) {
+				draw_level_bar(curr_level = NEXT_LEVEL(curr_level));
+				DMAT_update(0);
+			}
+		}
+		
+		_delay_ms(10);
 	}
-	
-	gameover_screen();
-	
-	_delay_ms(1000);
-	while (!BtN_PRESSED());
-	SW_RESET();
 }
 
-#endif
+#endif /* draw level bar test */
 
-// TESTS============================================================
 
-#if 0
-// rect draw test
+#if 0 /* rect draw test */
 
 int main() {
 	LEDMAT_init();
@@ -251,8 +301,7 @@ int main() {
 #endif /* rect draw test */
 
 
-#if 0
-// standby screen and eeprom test
+#if 0 /* standby screen and eeprom test */
 
 #include <avr/eeprom.h>
 
