@@ -40,15 +40,11 @@ static inline void _out_enable() {
 static inline void _out_disable() {
 	PORT(LEDMAT_CR) |= _BV(LEDMAT_OE);
 }
-static inline void _tx_section(u8 addr, const u8* RGBs) {
-	_addr(addr);
-	
+static inline void _tx_section(const u8* RGBs) {
 	for (u8 i = 0; i < LEDMAT_COL; i++) {
 		_rgb(*RGBs++);
 		_clock();
 	}
-	
-	_latch();
 }
 static inline void _init_port()
 {
@@ -101,10 +97,13 @@ void LEDMAT_refresh()
 {
 	static u8 section;
 
+	_tx_section(LEDMAT_FRONT_BUF[section]);
+	
 	_out_disable();
-	_tx_section(section, LEDMAT_FRONT_BUF[section]);
+	_latch();
+	_addr(section);
 	_out_enable();
-
+	
 	section = RR(section, LEDMAT_SECTION);
 }
 

@@ -188,7 +188,7 @@ static void gameover()
 {
 	gameover_screen();
 	
-	_delay_ms(1000);
+	_delay_ms(500);
 	while (!BtN_PRESSED());
 }
 
