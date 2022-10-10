@@ -11,6 +11,9 @@
 
 #include "led_matrix_16x32.h"
 
+//#define DISPLAY_MATRIX_EEPROM_ENABLE
+#define DISPLAY_MATRIX_PGM_ENABLE
+
 /* type for coordinates */
 typedef u8 coord_t;
 
@@ -59,5 +62,13 @@ void DMAT_draw_square_fill(coord_t r, coord_t c, coord_t side_size, u8 rgb);
 #define DMAT_DIGIT_RATIO_H 5
 #define DMAT_DIGIT_RATIO_W 3
 void DMAT_draw_digit_bit(coord_t row, coord_t col, u8 n, u8 rgb, coord_t scale);
+
+#ifdef DISPLAY_MATRIX_EEPROM_ENABLE
+void DMAT_draw_screen_from_eeprom(const u8* addr);
+#endif
+
+#ifdef DISPLAY_MATRIX_PGM_ENABLE
+void DMAT_draw_screen_from_pgm(const u8* addr);
+#endif
 
 #endif /* DISPLAY_MATRIX_API_H_ */

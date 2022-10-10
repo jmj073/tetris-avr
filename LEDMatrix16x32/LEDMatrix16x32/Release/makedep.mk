@@ -4,6 +4,8 @@
 
 display_matrix_api.c
 
+images.c
+
 interrupts.c
 
 led_matrix_16x32.c

@@ -6,7 +6,7 @@
  */ 
 
 #include <avr/io.h>
-#include <avr/eeprom.h>
+#include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
 #include <util/delay.h>
@@ -16,6 +16,7 @@
 #include "timer.h"
 #include "pins.h"
 #include "tetris.h"
+#include "images.h"
 
 // initilize========================================================
 
@@ -34,33 +35,15 @@ static inline void BtN_init()
 	PORT(BtN_PIN) |= BtN_ALL_PINS; // built-in pull-up
 }
 
-static void ADC_init(uint8_t channel)
-{
-	ADMUX |= _BV(REFS0); // AVCC를 기준 전압으로 선택
-	
-	ADCSRA |= 0x07; // 분주비 설정
-	ADCSRA |= _BV(ADEN); // ADC 활성화
-	
-	ADMUX = ((ADMUX & 0xE0) | channel); // 채널 선택
-}
-
 static void init()
 {
 	BtN_init();
 	LEDMAT_init();
 	timer2_init();
 	TimeBase_init();
-	ADC_init(0);
 }
 
 // =================================================================
-
-int ADC_read()
-{
-	ADCSRA |= _BV(ADSC); // 변환 시작
-	while ( !(ADCSRA & _BV(ADIF)) ); // 변환 대기
-	return ADC;
-}
 
 static void set_display_brightness(u8 brightness)
 {
@@ -80,7 +63,7 @@ static inline u8 get_display_brightness()
 // ~next level~
 #define NEXT_LEVEL(level) (((level) + 1) % (MAX_LEVEL + 1))
 
-_Static_assert(15 * MAX_LEVEL < 300, "nope");
+_Static_assert(17 * MAX_LEVEL < 300, "nope");
 static inline u32 level_to_tick(u8 level)
 {
 	return 300 - 17 * level;
@@ -88,28 +71,19 @@ static inline u32 level_to_tick(u8 level)
 
 // draw=============================================================
 
-static void draw_screen_from_eeprom(u8* addr)
-{
-	for (coord_t r = 0; r < DMAT_ROW; r++)
-	for (coord_t c = 0; c < DMAT_COL / 2; c++) {
-		u8 rgb = eeprom_read_byte(addr++);
-		DMAT_set_rgb_bit(r, c, rgb & 7);
-		DMAT_set_rgb_bit(r, c + DMAT_COL / 2, rgb >> 3);
-	}
-}
-
+// eeprom address
 #define STANDBY_SCREEN_ADDR		((u8*)0)
 #define GAMEOVER_SCREEN_ADDR	((u8*)(DMAT_ROW * (DMAT_COL / 2)))
 
 static inline void standby_screen()
 {
-	draw_screen_from_eeprom(STANDBY_SCREEN_ADDR);
+	DMAT_draw_screen_from_pgm((const u8*)STANDBY_IMAGE);
 }
 
 static void gameover_screen()
 {
 
-	draw_screen_from_eeprom(GAMEOVER_SCREEN_ADDR);
+	DMAT_draw_screen_from_pgm((const u8*)GAMEOVER_IMAGE);
 	draw_score(DMAT_ROW / 2 + 3);
 
 	DMAT_update(0);
@@ -146,7 +120,6 @@ static void countdown(u8 cnt)
 static u32 menu()
 {
 	DEF_PREV_MS(LEVEL_CHANGE_MS) = 0;
-	u8 PREV_INPUT = 0;
 	static u8 curr_level = DEFAULT_LEVEL;
 	
 	standby_screen();
@@ -177,7 +150,6 @@ static u32 menu()
 			break;
 		}
 		
-		PREV_INPUT = input;
 		_delay_ms(10);
 	}
 	
@@ -197,7 +169,7 @@ static void run()
 	DEF_PREV_MS(INPUT_POLL_MS);
 	u32 TICK_PREV, TICK;
 
-	tetris_init(ADC_read());
+	tetris_init(millis());
 
 	_delay_ms(500);
 	TICK = menu();
@@ -228,6 +200,38 @@ int main()
 	sei();
 	loop run();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

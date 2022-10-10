@@ -18,7 +18,7 @@
 #define LEFT	_BV(BtN_LEFT)
 #define RIGHT	_BV(BtN_RIGHT)
 
-// block layout is: {w-1,h-1}{x0,y0}{x1,y1}{x2,y2}{x3,y3} (two bits each, total 20 bits)
+// block layout is: {h-1,w-1}{x0,y0}{x1,y1}{x2,y2}{x3,y3} (two bits each, total 20 bits)
 
 #define BOARD_ROW	20
 #define BOARD_COL	10

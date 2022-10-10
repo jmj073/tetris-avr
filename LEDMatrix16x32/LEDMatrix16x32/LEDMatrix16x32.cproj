@@ -146,6 +146,12 @@
     <Compile Include="display_matrix_api.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="images.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="images.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="interrupts.c">
       <SubType>compile</SubType>
     </Compile>
