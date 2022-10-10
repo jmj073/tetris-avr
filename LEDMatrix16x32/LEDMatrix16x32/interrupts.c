@@ -13,7 +13,7 @@
 
 ISR(TIMER0_OVF_vect)
 {
-	timer0_inc_tick();
+	TimeBase_inc_tick();
 }
 
 /* LED matrix refresh */

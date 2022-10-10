@@ -49,7 +49,7 @@ static void init()
 	BtN_init();
 	LEDMAT_init();
 	timer2_init();
-	timer0_init();
+	TimeBase_init();
 	ADC_init(0);
 }
 
@@ -146,7 +146,8 @@ static void countdown(u8 cnt)
 static u32 menu()
 {
 	DEF_PREV_MS(LEVEL_CHANGE_MS) = 0;
-	u8 curr_level = DEFAULT_LEVEL;
+	u8 PREV_INPUT = 0;
+	static u8 curr_level = DEFAULT_LEVEL;
 	
 	standby_screen();
 	draw_level_bar(curr_level);
@@ -176,6 +177,7 @@ static u32 menu()
 			break;
 		}
 		
+		PREV_INPUT = input;
 		_delay_ms(10);
 	}
 	
@@ -248,39 +250,30 @@ int main()
 
 // TESTS==================================================================================
 
+#if 0 /* timer macro utility test */
 
-#if 0 /* draw level bar test */
+#define TEST 300
 
 int main()
 {
 	init();
-	
 	sei();
-
-	DEF_PREV_MS(LEVEL_CHANGE_MS) = 0;
-	u8 curr_level = DEFAULT_LEVEL;
 	
-	standby_screen();
-	draw_level_bar(curr_level);
+	DMAT_set_rgb_bit(0, 0, CR | CG | CB);
 	DMAT_update(0);
-
+	
+	DEF_PREV_MS(TEST);
+	
 	loop {
-		u8 input = BtN_PRESSED();
+		u32 curr = millis();
 		
-		if (input & _BV(BtN_LEFT)) {
-			u32 curr_ms = millis();
-			if (TIME_OUT_MSA(curr_ms, LEVEL_CHANGE_MS)) {
-				draw_level_bar(curr_level = NEXT_LEVEL(curr_level));
-				DMAT_update(0);
-			}
+		if (TIME_OUT_MSI(curr, TEST)) {
+			DMAT_update(0);
 		}
-		
-		_delay_ms(10);
 	}
 }
 
-#endif /* draw level bar test */
-
+#endif /* timer macro utility test */
 
 #if 0 /* rect draw test */
 

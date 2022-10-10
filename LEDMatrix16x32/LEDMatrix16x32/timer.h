@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 
+#if 1 /* first version */
 #define TIME_OUTA(curr, prev, n)(((curr) - (prev)) >= n\
 								&& ((prev) = (curr), 1))
 #define TIME_OUTI(curr, prev, n)(((curr) - (prev)) >= n\
@@ -34,11 +35,20 @@
 // Increase
 #define TIME_OUT_USI(curr, n) (((curr) - __prev_us_##n) >= n\
 								&& (__prev_us_##n += n, 1))
+#endif /* first version */
+
+#if 1 /* second version */
+
+#endif /* second version */
 
 
-void timer0_init();
+/* 
++ TimeBase: timer/counter 0
++ ticker: timer/counter 3
+*/
 
-void timer0_inc_tick();
+void TimeBase_init();
+void TimeBase_inc_tick();
 
 uint32_t millis();
 

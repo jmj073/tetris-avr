@@ -18,17 +18,17 @@
 	조금의 텀이 있은 후에 연속으로 a가 나오는 것을
 	예로 들 수 있다.
 */
-#define LR_SEMICONT_TERM 300
-#define LR_SEMICONT_CONT 60
+#define LR_SEMICONT_TERM 300UL
+#define LR_SEMICONT_CONT 60UL
 
 /* 
 + main() 참고
 + S/W debouncing을 위해 INPUT_POLL_MS는
   작지 않게 유지한다.
 */
-#define INPUT_POLL_MS 15
+#define INPUT_POLL_MS 15UL
 
-#define LEVEL_CHANGE_MS		150
+#define LEVEL_CHANGE_MS		150UL
 
 // MIN_LVEL은 0으로 고정
 #define MAX_LEVEL			16
