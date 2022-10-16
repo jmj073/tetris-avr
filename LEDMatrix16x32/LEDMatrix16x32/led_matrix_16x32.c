@@ -18,13 +18,13 @@ static inline void _addr(u8 addr) {
 	PORT(LEDMAT_CR) = (PORT(LEDMAT_CR) & ~0x07) | (addr & 0x07);
 }
 static inline void _rgb(u8 rgb) {
-	PORT(LEDMAT_RGB) = (PORT(LEDMAT_RGB) & ~LEDMAT_RGB_ALL) | (rgb & LEDMAT_RGB_ALL);
+	PORT(LEDMAT_RGB) = (PORT(LEDMAT_RGB) & ~LEDMAT_RGB_ALL) | rgb;
 }
 static inline void _rgb1(u8 rgb1) {
-	PORT(LEDMAT_RGB) = (PORT(LEDMAT_RGB) & ~LEDMAT_RGB1) | (rgb1 & LEDMAT_RGB1);
+	PORT(LEDMAT_RGB) = (PORT(LEDMAT_RGB) & ~LEDMAT_RGB1) | rgb1;
 }
 static inline void _rgb2(u8 rgb2) {
-	PORT(LEDMAT_RGB) = (PORT(LEDMAT_RGB) & ~LEDMAT_RGB2) | ((rgb2 << 3) & LEDMAT_RGB2);
+	PORT(LEDMAT_RGB) = (PORT(LEDMAT_RGB) & ~LEDMAT_RGB2) | (rgb2 << 3);
 }
 static inline void _clock() {
 	PORT(LEDMAT_CR) |= _BV(LEDMAT_CLK);
@@ -90,6 +90,7 @@ u8 LEDMAT_get_rgb_bit(u8 r, u8 c)
 
 void LEDMAT_fill_rgb_bit(u8 rgb)
 {
+	rgb = ((rgb << 3) | rgb) & LEDMAT_RGB_ALL;
 	memset(LEDMAT_BACK_BUF, rgb, sizeof(LEDMAT_BACK_BUF));
 }
 
