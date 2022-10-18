@@ -181,7 +181,7 @@ static void run()
 	PREV_MS(INPUT_POLL_MS) = init_value - INPUT_POLL_MS;
 	PREV_TICK = init_value - TICK;
 	
-	PREV_INPUT = BTN_PRESSED();
+	PREV_INPUT = 0;
 
 	loop {
 		u32 curr = millis();
@@ -192,8 +192,9 @@ static void run()
 		}
 		tetris_process_input(PREV_INPUT);
 
-		if (TIME_OUTI(curr, PREV_TICK, TICK))
+		if (TIME_OUTI(curr, PREV_TICK, TICK)) {
 			if (!tetris_do_tick()) break;
+		}
 	}
 
 	gameover();
