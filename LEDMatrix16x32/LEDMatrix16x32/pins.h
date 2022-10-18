@@ -17,13 +17,13 @@
 		+ led_matrix_16x32.h
 */
 
-#define BtN_PIN (&PIND)
-#define BtN_ALL_PINS 0x0F
-#define BtN_UP		0
-#define BtN_DOWN	1
-#define BtN_LEFT	2
-#define BtN_RIGHT	3
-#define BtN_PRESSED() (~PIN(BtN_PIN) & BtN_ALL_PINS)
+#define BTN_PIN (&PIND)
+#define BTN_ALL_PINS 0x0F
+#define BTN_UP		0
+#define BTN_DOWN	1
+#define BTN_LEFT	2
+#define BTN_RIGHT	3
+#define BTN_PRESSED() (~PIN(BTN_PIN) & BTN_ALL_PINS)
 
 
 #endif /* PINS_H_ */

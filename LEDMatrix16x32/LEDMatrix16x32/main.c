@@ -31,8 +31,8 @@ static inline void timer2_init()
 
 static inline void BtN_init()
 {
-	DDR(BtN_PIN) &= ~BtN_ALL_PINS; // input
-	PORT(BtN_PIN) |= BtN_ALL_PINS; // built-in pull-up
+	DDR(BTN_PIN) &= ~BTN_ALL_PINS; // input
+	PORT(BTN_PIN) |= BTN_ALL_PINS; // built-in pull-up
 }
 
 static void init()
@@ -127,26 +127,26 @@ static u32 menu()
 	DMAT_update(DMAT_CP);
 
 	loop {
-		u8 input = BtN_PRESSED();
+		u8 input = BTN_PRESSED();
 		
-		if (input & _BV(BtN_UP)) {
+		if (input & _BV(BTN_UP)) {
 			u8 brightness = get_display_brightness();
 			if (brightness < MAX_LEDMAT_BRIGHTNESS)
 			set_display_brightness(brightness + 1);
 		}
-		if (input & _BV(BtN_DOWN)) {
+		if (input & _BV(BTN_DOWN)) {
 			u8 brightness = get_display_brightness();
 			if (brightness > MIN_LEDMAT_BRIGHTNESS)
 			set_display_brightness(brightness - 1);
 		}
-		if (input & _BV(BtN_LEFT)) {
+		if (input & _BV(BTN_LEFT)) {
 			u32 curr_ms = millis();
 			if (TIME_OUT_MSA(curr_ms, LEVEL_CHANGE_MS)) {
 				draw_level_bar(curr_level = NEXT_LEVEL(curr_level));
 				DMAT_update(0);
 			}
 		}
-		if (input & _BV(BtN_RIGHT)) {
+		if (input & _BV(BTN_RIGHT)) {
 			break;
 		}
 		
@@ -161,13 +161,14 @@ static void gameover()
 	gameover_screen();
 	
 	_delay_ms(500);
-	while (!BtN_PRESSED());
+	while (!BTN_PRESSED());
 }
 
 static void run()
 {
 	DEF_PREV_MS(INPUT_POLL_MS);
-	u32 TICK_PREV, TICK;
+	u32 PREV_TICK, TICK;
+	u8 PREV_INPUT;
 
 	tetris_init(millis());
 
@@ -178,15 +179,20 @@ static void run()
 
 	u32 init_value = millis();
 	PREV_MS(INPUT_POLL_MS) = init_value - INPUT_POLL_MS;
-	TICK_PREV = init_value - TICK;
+	PREV_TICK = init_value - TICK;
+	
+	PREV_INPUT = BTN_PRESSED();
 
 	loop {
 		u32 curr = millis();
 
-		if (TIME_OUT_MSI(curr, INPUT_POLL_MS))
-			tetris_process_input(BtN_PRESSED());
+		u8 curr_input = BTN_PRESSED();
+		if (curr_input != PREV_INPUT && TIME_OUT_MSA(curr, INPUT_POLL_MS)) {
+			PREV_INPUT = curr_input;
+		}
+		tetris_process_input(PREV_INPUT);
 
-		if (TIME_OUTI(curr, TICK_PREV, TICK))
+		if (TIME_OUTI(curr, PREV_TICK, TICK))
 			if (!tetris_do_tick()) break;
 	}
 

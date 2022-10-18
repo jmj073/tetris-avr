@@ -13,10 +13,10 @@
 #include "settings.h"
 #include "timer.h"
 
-#define UP		_BV(BtN_UP)
-#define DOWN	_BV(BtN_DOWN)
-#define LEFT	_BV(BtN_LEFT)
-#define RIGHT	_BV(BtN_RIGHT)
+#define UP		_BV(BTN_UP)
+#define DOWN	_BV(BTN_DOWN)
+#define LEFT	_BV(BTN_LEFT)
+#define RIGHT	_BV(BTN_RIGHT)
 
 // block layout is: {h-1,w-1}{x0,y0}{x1,y1}{x2,y2}{x3,y3} (two bits each, total 20 bits)
 
