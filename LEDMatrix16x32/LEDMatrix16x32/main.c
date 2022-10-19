@@ -29,7 +29,7 @@ static inline void timer2_init()
 	TIMSK |= _BV(OCIE2);
 }
 
-static inline void BtN_init()
+static inline void BTN_init()
 {
 	DDR(BTN_PIN) &= ~BTN_ALL_PINS; // input
 	PORT(BTN_PIN) |= BTN_ALL_PINS; // built-in pull-up
@@ -37,7 +37,7 @@ static inline void BtN_init()
 
 static void init()
 {
-	BtN_init();
+	BTN_init();
 	LEDMAT_init();
 	timer2_init();
 	TimeBase_init();

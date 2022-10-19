@@ -18,8 +18,8 @@
 	조금의 텀이 있은 후에 연속으로 a가 나오는 것을
 	예로 들 수 있다.
 */
-#define LR_SEMICONT_TERM 300UL
-#define LR_SEMICONT_CONT 60UL
+#define LR_SEMICONT_TERM 200UL
+#define LR_SEMICONT_CONT 35UL
 
 /* 
 + main() 참고

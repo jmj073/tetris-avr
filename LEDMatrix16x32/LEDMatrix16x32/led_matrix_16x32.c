@@ -90,7 +90,9 @@ u8 LEDMAT_get_rgb_bit(u8 r, u8 c)
 
 void LEDMAT_fill_rgb_bit(u8 rgb)
 {
-	rgb = ((rgb << 3) | rgb) & LEDMAT_RGB_ALL;
+	rgb &= LEDMAT_RGB1;
+	rgb = (rgb << 3) | rgb;
+	
 	memset(LEDMAT_BACK_BUF, rgb, sizeof(LEDMAT_BACK_BUF));
 }
 
