@@ -18,9 +18,11 @@ static inline void __DMAT_draw_rect_fill(coord_t r, coord_t c, coord_t h, coord_
 	
 	coord_t col = c;
 
-	for (;r < h; r++)
-	for (c = col;c < w; c++)
-	DMAT_set_rgb_bit(r, c, rgb);
+	for (;r < h; r++) {
+		for (c = col;c < w; c++) {
+			DMAT_set_rgb_bit(r, c, rgb);
+		}
+	}
 }
 
 void DMAT_draw_rect_fill(coord_t r, coord_t c, coord_t h, coord_t w, u8 rgb)
@@ -37,10 +39,13 @@ void DMAT_draw_digit_bit(coord_t row, coord_t col, u8 n, u8 rgb, coord_t scale)
 {
 	u16 digit = DIGITS[n];
 
-	for (coord_t r = 0; r < DMAT_DIGIT_RATIO_H; r++)
-	for (coord_t c = 0; c < DMAT_DIGIT_RATIO_W; c++) {
-		if (digit & 1)  DMAT_draw_square_fill(r * scale + row, c * scale + col, scale, rgb);
-		digit >>= 1;
+	for (coord_t r = 0; r < DMAT_DIGIT_RATIO_H; r++) {
+		for (coord_t c = 0; c < DMAT_DIGIT_RATIO_W; c++) {
+			if (digit & 1) {
+				DMAT_draw_square_fill(r * scale + row, c * scale + col, scale, rgb);
+			}
+			digit >>= 1;
+		}
 	}
 }
 
@@ -49,11 +54,12 @@ void DMAT_draw_digit_bit(coord_t row, coord_t col, u8 n, u8 rgb, coord_t scale)
 
 void DMAT_draw_screen_from_eeprom(const u8* addr)
 {
-	for (coord_t r = 0; r < DMAT_ROW; r++)
-	for (coord_t c = 0; c < DMAT_COL / 2; c++) {
-		u8 rgb = eeprom_read_byte(addr++);
-		DMAT_set_rgb_bit(r, c, rgb & 7);
-		DMAT_set_rgb_bit(r, c + DMAT_COL / 2, rgb >> 3);
+	for (coord_t r = 0; r < DMAT_ROW; r++) {
+		for (coord_t c = 0; c < DMAT_COL / 2; c++) {
+			u8 rgb = eeprom_read_byte(addr++);
+			DMAT_set_rgb_bit(r, c, rgb & 7);
+			DMAT_set_rgb_bit(r, c + DMAT_COL / 2, rgb >> 3);
+		}
 	}
 }
  
@@ -64,11 +70,12 @@ void DMAT_draw_screen_from_eeprom(const u8* addr)
 
 void DMAT_draw_screen_from_pgm(const u8* addr)
 {
-	for (coord_t r = 0; r < DMAT_ROW; r++)
-	for (coord_t c = 0; c < DMAT_COL / 2; c++) {
-		u8 rgb = pgm_read_byte(addr++);
-		DMAT_set_rgb_bit(r, c, rgb & 7);
-		DMAT_set_rgb_bit(r, c + DMAT_COL / 2, rgb >> 3);
+	for (coord_t r = 0; r < DMAT_ROW; r++) {
+		for (coord_t c = 0; c < DMAT_COL / 2; c++) {
+			u8 rgb = pgm_read_byte(addr++);
+			DMAT_set_rgb_bit(r, c, rgb & 7);
+			DMAT_set_rgb_bit(r, c + DMAT_COL / 2, rgb >> 3);
+		}
 	}
 }
 

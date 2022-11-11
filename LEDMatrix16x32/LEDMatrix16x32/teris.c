@@ -52,8 +52,9 @@ static void new_piece() {
 
 // set the value of the board for a particular (x,y,r) piece
 static void set_piece(i8 x, i8 y, i8 r, u8 v) {
-	for (i8 i = 0; i < 8; i += 2)
+	for (i8 i = 0; i < 8; i += 2) {
 		BOARD[NUM(r, i * 2) + y][NUM(r, (i * 2) + 2) + x] = v;
+	}
 }
 
 // move a piece from old (p*) coords to new
@@ -66,11 +67,13 @@ static void update_piece() {
 static void remove_line() {
 	for (u8 row = Y; row <= Y + NUM(R, 18); row++) {
 		
-		for (u8 i = 0; i < BOARD_COL; i++)
+		for (u8 i = 0; i < BOARD_COL; i++) {
 			if (!BOARD[row][i]) goto CONTINUE;
+		}
 
-		for (i8 i = row - 1; i > 0; i--)
+		for (i8 i = row - 1; i > 0; i--) {
 			memcpy(&BOARD[i + 1][0], &BOARD[i][0], sizeof(**BOARD) * BOARD_COL);
+		}
 
 		//memset(&board[0][0], 0, 10);
 		SCORE++;
@@ -118,10 +121,11 @@ static void rotate_piece(u8 flag) {
 
 static void move_piece(u8 flag)
 {
-	if (flag & LEFT)
+	if (flag & LEFT) {
 		(void)(X > 0 && !check_hit(X - 1, Y, R) && X--);
-	else
+	} else {
 		(void)(X + NUM(R, 16) < 9 && !check_hit(X + 1, Y, R) && X++);
+	}
 }
 
 // drawing mechanism=================================================
@@ -194,8 +198,7 @@ void tetris_process_input(u8 input)
 		move_piece(input);
 		
 		changed = 1;
-	}
-	else if ( input & LnR ) {
+	} else if ( input & LnR ) {
 		u32 curr = millis();
 		
 		if (TIME_OUTI(curr, PREV_MS_BTN_LR, WAIT_TIME_BTN_LR)) {
@@ -206,8 +209,9 @@ void tetris_process_input(u8 input)
 	}
 	
 	/* UP: rotate to the right */
-	if ( ~PREV_INPUT & input & UP )
+	if ( ~PREV_INPUT & input & UP ) {
 		rotate_piece(RIGHT), changed = 1;
+	}
 
 	/* DOWN: rotate to the left */
 	if ( ~PREV_INPUT & input & DOWN ) {
@@ -238,10 +242,8 @@ u8 tetris_do_tick()
 	return 1;
 }
 
-void tetris_init(int seed)
-{
-	srand(seed);
-	
+void tetris_init()
+{	
 	memset((void*)BOARD, 0, sizeof(BOARD));
 	new_piece();
 	SCORE = 0;
