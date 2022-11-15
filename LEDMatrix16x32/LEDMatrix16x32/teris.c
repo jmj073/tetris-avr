@@ -112,7 +112,9 @@ static u8 check_hit(i8 x, i8 y, i8 r) {
 
 static void rotate_piece(u8 flag) {
 	R = (flag == LEFT)  ? LR(R, 4) : RR(R, 4);
-	while (X + NUM(R, 16) > 9) X--;
+	while (X + NUM(R, 16) > 9) {
+		 X--;
+	}
 	if (check_hit(X, Y, R)) {
 		X = PX;
 		R = PR;
@@ -149,9 +151,11 @@ static inline void draw_border() {
 }
 
 static inline void draw_board() {
-	for (coord_t r = 0; r < BOARD_ROW; r++)
-	for (coord_t c = 0; c < BOARD_COL; c++)
-	DMAT_set_rgb_bit(BOARD_START_ROW + r, BOARD_START_COL + c, BOARD[r][c]);
+	for (coord_t r = 0; r < BOARD_ROW; r++) {
+		for (coord_t c = 0; c < BOARD_COL; c++) {
+			DMAT_set_rgb_bit(BOARD_START_ROW + r, BOARD_START_COL + c, BOARD[r][c]);
+		}
+	}
 }
 
 #define SCORE_ROW (BOARD_END_ROW + 2)
@@ -165,7 +169,7 @@ void draw_score(coord_t row) {
 	}
 }
 
-// draw the board and score
+/* draw the board and score */
 static void frame()
 {
 	DMAT_clear();
@@ -180,41 +184,38 @@ static void frame()
 // ==================================================================
 
 #define LnR (LEFT | RIGHT)
-static u8 PREV_INPUT;
-void tetris_process_input(u8 input)
+void tetris_process_input(u8 curr_input, u8 prev_input)
 {
 	static u32 PREV_MS_BTN_LR;
 	static u32 WAIT_TIME_BTN_LR;
 
 	u8 changed = 0;
-	
-	/* LEFT & RIGHT: horizontal move */
-	if ((LnR & input) == LnR) input &= ~LnR;
 
-	if ( ~PREV_INPUT & input & LnR ) {
+	/* LEFT & RIGHT: horizontal move */
+	if ( ~prev_input & curr_input & LnR ) {
 		WAIT_TIME_BTN_LR = LR_SEMICONT_TERM;
 		PREV_MS_BTN_LR = millis();
 
-		move_piece(input);
+		move_piece(curr_input);
 		
 		changed = 1;
-	} else if ( input & LnR ) {
+	} else if ( curr_input & LnR ) {
 		u32 curr = millis();
 		
 		if (TIME_OUTI(curr, PREV_MS_BTN_LR, WAIT_TIME_BTN_LR)) {
 			WAIT_TIME_BTN_LR = LR_SEMICONT_CONT;
-			move_piece(input);
+			move_piece(curr_input);
 			changed = 1;
 		}
 	}
 	
 	/* UP: rotate to the right */
-	if ( ~PREV_INPUT & input & UP ) {
+	if ( ~prev_input & curr_input & UP ) {
 		rotate_piece(RIGHT), changed = 1;
 	}
 
 	/* DOWN: rotate to the left */
-	if ( ~PREV_INPUT & input & DOWN ) {
+	if ( ~prev_input & curr_input & DOWN ) {
 		rotate_piece(LEFT), changed = 1;
 	}
 	
@@ -222,8 +223,6 @@ void tetris_process_input(u8 input)
 		update_piece();
 		frame();
 	}
-	
-	PREV_INPUT = input;
 }
 
 u8 tetris_do_tick()
@@ -247,5 +246,4 @@ void tetris_init()
 	memset((void*)BOARD, 0, sizeof(BOARD));
 	new_piece();
 	SCORE = 0;
-	PREV_INPUT = 0;
 }

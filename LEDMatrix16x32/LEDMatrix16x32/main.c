@@ -215,10 +215,14 @@ static void run()
 		u32 curr = millis();
 
 		u8 curr_input = BTN_PRESSED();
-		if (curr_input != PREV_INPUT && TIME_OUT_MSA(curr, INPUT_POLL_MS)) {
-			PREV_INPUT = curr_input;
+		if (curr_input != PREV_INPUT) {
+			if (!TIME_OUT_MSA(curr, INPUT_POLL_MS)) {
+				curr_input = PREV_INPUT;
+			}
 		}
-		tetris_process_input(PREV_INPUT);
+		
+		tetris_process_input(curr_input, PREV_INPUT);
+		PREV_INPUT = curr_input;
 
 		if (TIME_OUTI(curr, PREV_TICK, TICK)) {
 			if (!tetris_do_tick()) break;

@@ -13,9 +13,9 @@
 #include "my_util.h"
 
 /*
-	+ 핀 매핑 설정을 위해 추가적으로 봐야할 파일:
-		+ led_matrix_16x32.h
-*/
+ *	+ 핀 매핑 설정을 위해 추가적으로 봐야할 파일:
+ *		+ led_matrix_16x32.h
+ */
 
 #define BTN_PIN (&PIND)
 #define BTN_ALL_PINS 0x0F

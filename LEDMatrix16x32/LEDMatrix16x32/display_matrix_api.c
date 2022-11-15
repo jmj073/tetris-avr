@@ -18,7 +18,7 @@ static inline void __DMAT_draw_rect_fill(coord_t r, coord_t c, coord_t h, coord_
 	
 	coord_t col = c;
 
-	for (;r < h; r++) {
+	for (; r < h; r++) {
 		for (c = col;c < w; c++) {
 			DMAT_set_rgb_bit(r, c, rgb);
 		}

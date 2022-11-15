@@ -15,7 +15,7 @@
 #include "display_matrix_api.h"
 
 void tetris_init();
-void tetris_process_input(u8 input);
+void tetris_process_input(u8 curr_input, u8 prev_input);
 u8 tetris_do_tick();
 void draw_score(coord_t row);
 
