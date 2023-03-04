@@ -32,15 +32,15 @@
 #define LEDMAT_B2		5
 
 /* CONTROL PINS*/
-#define LEDMAT_CR		(&PINC)
-#define LEDMAT_CR_ALL	0x77
+#define LEDMAT_CR		(&PINB)
+#define LEDMAT_CR_ALL	0xB7
 #define LEDMAT_A		0
 #define LEDMAT_B		1
 #define LEDMAT_C		2
 //#define LEDMAT_D		3 // used on 32x32
 #define LEDMAT_CLK		4
 #define LEDMAT_LAT		5
-#define LEDMAT_OE		6
+#define LEDMAT_OE		7
 
 #define LEDMAT_MIN_BRIGHTNESS		0U
 #define LEDMAT_MAX_BRIGHTNESS		255U

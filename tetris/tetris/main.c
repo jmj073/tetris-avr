@@ -129,14 +129,14 @@ static u32 menu()
 		
 		if (input & _BV(BTN_UP)) {
 			u8 brightness = LEDMAT_get_brightness();
-			if (brightness < LEDMAT_MAX_BRIGHTNESS) {
-				LEDMAT_set_brightness(brightness + 1);
+			if (brightness < DMAT_MAX_BRIGHTNESS) {
+				DMAT_set_brightness(brightness + 1);
 			}
 		}
 		if (input & _BV(BTN_DOWN)) {
 			u8 brightness = LEDMAT_get_brightness();
-			if (brightness > LEDMAT_MIN_BRIGHTNESS) {
-				LEDMAT_set_brightness(brightness - 1);
+			if (brightness > DMAT_MIN_BRIGHTNESS) {
+				DMAT_set_brightness(brightness - 1);
 			}
 		}
 		if (input & _BV(BTN_LEFT)) {

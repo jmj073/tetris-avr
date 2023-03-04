@@ -8,9 +8,30 @@
 #include "led_matrix_16x32.h"
 #include <util/delay.h>
 #include <avr/interrupt.h>
+#include <avr/pgmspace.h>
 
-/* for led matrix refreshing*/ // timer2 OVF
-#define TC_REFRESH_CLOCK_SELECT (_BV(CS21) | _BV(CS20)) // 32
+#if 0
+static const uint8_t gamma8[] PROGMEM = {
+	0,  0,  0,  1,  1,  1,  1,  2,  2,  2,  3,  3,  4,  4,  4,  5,
+	5,  6,  6,  7,  7,  8,  8,  9,  9, 10, 10, 11, 12, 12, 13, 13,
+	14, 15, 15, 16, 16, 17, 18, 18, 19, 20, 20, 21, 22, 22, 23, 24,
+	25, 25, 26, 27, 28, 28, 29, 30, 31, 31, 32, 33, 34, 34, 35, 36,
+	37, 38, 38, 39, 40, 41, 42, 43, 43, 44, 45, 46, 47, 48, 49, 49,
+	50, 51, 52, 53, 54, 55, 56, 57, 57, 58, 59, 60, 61, 62, 63, 64,
+	65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
+	81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96,
+	97, 98, 99,100,101,103,104,105,106,107,108,109,110,111,112,113,
+	115,116,117,118,119,120,121,122,124,125,126,127,128,129,130,132,
+	133,134,135,136,137,139,140,141,142,143,145,146,147,148,149,151,
+	152,153,154,155,157,158,159,160,161,163,164,165,166,168,169,170,
+	171,173,174,175,176,178,179,180,181,183,184,185,187,188,189,190,
+	192,193,194,196,197,198,200,201,202,203,205,206,207,209,210,211,
+	213,214,215,217,218,219,221,222,223,225,226,227,229,230,232,233,
+	234,236,237,238,240,241,242,244,245,247,248,249,251,252,254,255
+};
+#endif
+
+static u8 __BRIGHTNESS;
 
 static u8 __LEDMAT_BUFFER[2][LEDMAT_SECTION][LEDMAT_COL];
 static u8 __LEDMAT_CURR_BUF = 0;
@@ -52,6 +73,11 @@ static inline void _out_disable() {
 	PORT(LEDMAT_CR) |= _BV(LEDMAT_OE);
 }
 
+static inline u8 _correction(u8 brightness) {
+	//return pgm_read_byte(&gamma8[brightness]);
+	return brightness;
+}
+
 static inline void _tx_section(const u8* RGBs) {
 	for (u8 i = 0; i < LEDMAT_COL; i++) {
 		_rgb(*RGBs++);
@@ -73,12 +99,15 @@ static inline void _refresh() {
 }
 
 /* refresher for LED matrix & control brightness */
-static inline void timer2_init()
+static inline void _timer2_init()
 {
-	TIMSK |= _BV(TOIE2);
-	TCCR2 |= TC_REFRESH_CLOCK_SELECT;
-	OCR2 = LEDMAT_DEFAULT_BRIGHTNESS;
-	TIMSK |= _BV(OCIE2);
+	TCCR2 |= (
+		_BV(WGM21) | _BV(WGM20)	| // Fast PWM
+		_BV(CS21) | _BV(CS20)	| // clk/64
+	0);
+	__BRIGHTNESS = LEDMAT_DEFAULT_BRIGHTNESS;
+	OCR2 = _correction(__BRIGHTNESS);
+	TIMSK |= _BV(TOIE2) | _BV(OCIE2);
 }
 
 static inline void _init_port()
@@ -91,7 +120,7 @@ void LEDMAT_init()
 {
 	_init_port();
 	_out_disable();
-	timer2_init();
+	_timer2_init();
 }
 
 void LEDMAT_swap_buffer()
@@ -134,18 +163,28 @@ void LEDMAT_fill_rgb_bit(u8 rgb)
 
 void LEDMAT_set_brightness(u8 brightness)
 {
-	if (brightness >= LEDMAT_MAX_BRIGHTNESS) {
-		OCR2 = LEDMAT_MAX_BRIGHTNESS;
+	if (brightness >= LEDMAT_MAX_BRIGHTNESS) {		
+		u8 timsk = TIMSK;
+		TIFR |= ~timsk & _BV(TOV2);
+		TIMSK = (timsk & ~_BV(OCIE2)) | _BV(TOIE2);
+		_out_enable();
+		__BRIGHTNESS = LEDMAT_MAX_BRIGHTNESS;
 	} else if (brightness <= LEDMAT_MIN_BRIGHTNESS) {
-		OCR2 = LEDMAT_MIN_BRIGHTNESS;
+		TIMSK &= ~(_BV(TOIE2) | _BV(OCIE2));
+		_out_disable();
+		__BRIGHTNESS = LEDMAT_MIN_BRIGHTNESS;
 	} else {
-		OCR2 = brightness;
+		OCR2 = _correction(brightness);
+		u8 timsk = TIMSK;
+		TIFR |= ~timsk & (_BV(TOV2) | _BV(OCF2));
+		TIMSK = timsk | _BV(TOIE2) | _BV(OCIE2);
+		__BRIGHTNESS = brightness;
 	}
 }
 
 u8 LEDMAT_get_brightness()
 {
-	return OCR2;
+	return __BRIGHTNESS;
 }
 
 /* LED matrix refresh */
@@ -159,155 +198,3 @@ ISR(TIMER2_COMP_vect)
 {
 	_out_disable();
 }
-
-
-
-
-
-
-
-
-// UNIT TEST=======================================================================
-#if 0
-
-#include <avr/interrupt.h>
-
-ISR(TIMER0_OVF_vect) {
-	LMAT_refresh();
-}
-
-static void timer0_init() {
-	TCCR0 |= _BV(CS01) | _BV(CS00); // ∫–¡÷∫Ò 64
-	TIMSK |= _BV(TOIE0);
-}
-
-#include <avr/delay.h>
-
-int main() {
-	//DDRD |= _BV(7);
-	//
-	//loop {
-		//PORTD ^= _BV(7);
-		//_delay_ms(250);
-	//}
-	
-	LMAT_init();
-	
-	for (u8 i = 0; i < LEDMAT_ROW; i++)
-		for (u8 j = 0; j < LEDMAT_COL; j++)
-			LMAT_set_rgb_bit(i, j, CR | CG | CB);
-	
-	timer0_init();
-	
-	sei();
-	
-	loop {
-		//for (u8 i = 0; i < LEDMAT_H; i++)
-		//for (u8 j = 0; j < LEDMAT_W; j++)
-		//LMAT_set_rgb(i, j, CR);
-//
-		//_delay_ms(1000);
-//
-		//for (u8 i = 0; i < LEDMAT_H; i++)
-		//for (u8 j = 0; j < LEDMAT_W; j++)
-		//LMAT_set_rgb(i, j, CG | CB);
-//
-		//_delay_ms(1000);
-		
-		LMAT_refresh();
-		_delay_ms(1);
-	}
-}
-
-//int main() {
-	//LMAT_init();
-//
-	//
-	//// [3, 10], [12, 19]
-	//for (u8 i = 0; i < 10; i++) {
-		//LMAT_set_rgb(3, 10 + i, CG);
-		//LMAT_set_rgb(3 + i, 19, CG);
-		//LMAT_set_rgb(12, 10 + i, CG);
-		//LMAT_set_rgb(3 + i, 10, CG);
-	//}
-	//
-	//loop {
-		//LMAT_refresh();
-		//_delay_ms(1);
-	//}
-//}
-
-//int main(void)
-//{
-//LED16X32_init_port();
-//
-//// fill color----------------------------------------
-//
-////for (uint8_t i = 0; i < 16; i++)
-////LED16X32_set_rgb(i, i, (CR | CG | CB) ^ i);
-//
-////for (uint8_t i = 0; i < 32; i++) {
-////LED16X32_set_rgb(0, i, i);
-////LED16X32_set_rgb(8, i, ~i);
-////}
-//
-////loop {
-////for (uint8_t i = 0; i < 8; i++)
-////_tx_section(i, __LED16X32_MATRIX[i]);
-////}
-//
-//// ghosting issue====================================================
-//
-////for (uint8_t i = 0; i < 32; i += 2) {
-////LED16X32_set_rgb(0, i, (CR | CG | CB));
-////LED16X32_set_rgb(8, i, (CR | CG | CB));
-////LED16X32_set_rgb(3, i + 1, CR);
-////LED16X32_set_rgb(11, i + 1, CR);
-////}
-////
-////loop {
-////_tx_section(3, __LED16X32_MATRIX[3]);
-////_tx_section(0, __LED16X32_MATRIX[0]);
-////}
-//
-//// OE test====================================================
-//
-//for (uint8_t i = 0; i < 32; i += 2) {
-//LED16X32_set_rgb(0, i, (CR | CG | CB));
-//LED16X32_set_rgb(8, i, (CR | CG | CB));
-//LED16X32_set_rgb(3, i + 1, CR);
-//LED16X32_set_rgb(11, i + 1, CR);
-//}
-//
-////loop {
-////_out_disable();
-////_tx_section(3, __LED16X32_MATRIX[3]);
-////_out_enable();
-////_delay_ms(1);
-////
-////
-////_out_disable();
-////_tx_section(0, __LED16X32_MATRIX[0]);
-////_out_enable();
-////
-////_delay_ms(1);
-////}
-//
-////====================================================
-//
-////for (uint8_t i = 0; i < 32; i++) {
-////LED16X32_set_rgb(0, i, (CR | CG | CB));
-////LED16X32_set_rgb(8, i, (CR | CG | CB));
-////}
-////
-////loop {
-////_tx_section(0, __LED16X32_MATRIX[0]);
-////}
-//
-//loop {
-//LED16X32_refresh();
-//_delay_ms(1);
-//}
-//}
-
-#endif // UNIT TEST
