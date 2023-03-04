@@ -20,10 +20,13 @@ typedef u8 coord_t;
 #define DMAT_ROW	LEDMAT_COL
 #define DMAT_COL	LEDMAT_ROW
 
+static inline void DMAT_clear() {
+	LEDMAT_fill_rgb_bit(0);
+}
 
-#define DMAT_clear() LEDMAT_fill_rgb_bit(0)
-#define DMAT_fill_bit(rgb) LEDMAT_fill_rgb_bit(rgb)
-
+static inline void DMAT_fill_bit(u8 rgb) {
+	LEDMAT_fill_rgb_bit(rgb);
+}
 
 /* not implemented */
 //#define DMAT_set_rgb()
@@ -53,8 +56,6 @@ static inline void DMAT_update(u8 flags) {
 		LEDMAT_copy_buffer(); // copy front buffer to back buffer
 }
 
-
-
 void DMAT_draw_rect_fill(coord_t r, coord_t c, coord_t h, coord_t w, u8 rgb);
 void DMAT_draw_square_fill(coord_t r, coord_t c, coord_t side_size, u8 rgb);
 
@@ -70,5 +71,12 @@ void DMAT_draw_screen_from_eeprom(const u8* addr);
 #ifdef DISPLAY_MATRIX_PGM_ENABLE
 void DMAT_draw_screen_from_pgm(const u8* addr);
 #endif
+
+static inline void DMAT_set_brightness(u8 brightness) {
+	LEDMAT_set_brightness(brightness);
+}
+static inline u8 DMAT_get_brightness() {
+	return LEDMAT_get_brightness();
+}
 
 #endif /* DISPLAY_MATRIX_API_H_ */

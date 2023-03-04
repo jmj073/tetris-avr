@@ -6,9 +6,7 @@
  */ 
 
 #include <avr/io.h>
-#include <avr/pgmspace.h>
 #include <avr/interrupt.h>
-#include <avr/wdt.h>
 #include <util/delay.h>
 
 #include <stdlib.h>
@@ -23,15 +21,6 @@
 int ADC_read();
 
 // initilize========================================================
-
-/* refresher for LED matrix & control brightness */
-static inline void timer2_init()
-{
-	TIMSK |= _BV(TOIE2);
-	TCCR2 |= TC_REFRESH_CLOCK_SELECT;
-	OCR2 = DEFAULT_LEDMAT_BRIGHTNESS;
-	TIMSK |= _BV(OCIE2);
-}
 
 static inline void BTN_init()
 {
@@ -53,7 +42,6 @@ static void init()
 {
 	BTN_init();
 	LEDMAT_init();
-	timer2_init();
 	TimeBase_init();
 	ADC_init(0);
 	srand(ADC_read());
@@ -66,22 +54,6 @@ int ADC_read()
 	ADCSRA |= _BV(ADSC); // 변환 시작
 	while ( !(ADCSRA & _BV(ADIF)) ); // 변환 대기
 	return ADC;
-}
-
-static void set_display_brightness(u8 brightness)
-{
-	if (brightness >= MAX_LEDMAT_BRIGHTNESS) {
-		OCR2 = MAX_LEDMAT_BRIGHTNESS;
-	} else if (brightness <= MIN_LEDMAT_BRIGHTNESS) {
-		OCR2 = MIN_LEDMAT_BRIGHTNESS;
-	} else {
-		OCR2 = brightness;
-	}
-}
-
-static inline u8 get_display_brightness()
-{
-	return OCR2;
 }
 
 // ~next level~
@@ -156,15 +128,15 @@ static u32 menu()
 		u8 input = BTN_PRESSED();
 		
 		if (input & _BV(BTN_UP)) {
-			u8 brightness = get_display_brightness();
-			if (brightness < MAX_LEDMAT_BRIGHTNESS) {
-				set_display_brightness(brightness + 1);
+			u8 brightness = LEDMAT_get_brightness();
+			if (brightness < LEDMAT_MAX_BRIGHTNESS) {
+				LEDMAT_set_brightness(brightness + 1);
 			}
 		}
 		if (input & _BV(BTN_DOWN)) {
-			u8 brightness = get_display_brightness();
-			if (brightness > MIN_LEDMAT_BRIGHTNESS) {
-				set_display_brightness(brightness - 1);
+			u8 brightness = LEDMAT_get_brightness();
+			if (brightness > LEDMAT_MIN_BRIGHTNESS) {
+				LEDMAT_set_brightness(brightness - 1);
 			}
 		}
 		if (input & _BV(BTN_LEFT)) {

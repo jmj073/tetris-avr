@@ -36,12 +36,6 @@
 
 #define LEVEL_BAR_COLOR		(CG | CB)
 
-/* for led matrix refreshing*/ // timer2 OVF
-#define TC_REFRESH_CLOCK_SELECT (_BV(CS21) | _BV(CS20)) // 32
 
-/* 1 ~ 255 */
-#define MIN_LEDMAT_BRIGHTNESS		1U
-#define MAX_LEDMAT_BRIGHTNESS		255U
-#define DEFAULT_LEDMAT_BRIGHTNESS	42U
 
 #endif /* SETTINGS_H_ */

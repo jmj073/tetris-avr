@@ -11,7 +11,8 @@
 static volatile uint32_t timer0_millis;
 static volatile uint16_t timer0_fract;
 
-void TimeBase_inc_tick()
+static inline
+void _inc_tick()
 {
 	uint32_t m = timer0_millis;
 	uint16_t f = timer0_fract;
@@ -40,4 +41,9 @@ uint32_t millis()
 	SREG = oldSREG;
 	
 	return m;
+}
+
+ISR(TIMER0_OVF_vect)
+{
+	_inc_tick();
 }

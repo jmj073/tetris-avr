@@ -7,6 +7,10 @@
 
 #include "led_matrix_16x32.h"
 #include <util/delay.h>
+#include <avr/interrupt.h>
+
+/* for led matrix refreshing*/ // timer2 OVF
+#define TC_REFRESH_CLOCK_SELECT (_BV(CS21) | _BV(CS20)) // 32
 
 static u8 __LEDMAT_BUFFER[2][LEDMAT_SECTION][LEDMAT_COL];
 static u8 __LEDMAT_CURR_BUF = 0;
@@ -17,35 +21,66 @@ static u8 __LEDMAT_CURR_BUF = 0;
 static inline void _addr(u8 addr) {
 	PORT(LEDMAT_CR) = (PORT(LEDMAT_CR) & ~0x07) | (addr & 0x07);
 }
+
 static inline void _rgb(u8 rgb) {
 	PORT(LEDMAT_RGB) = (PORT(LEDMAT_RGB) & ~LEDMAT_RGB_ALL) | rgb;
 }
+
 static inline void _rgb1(u8 rgb1) {
 	PORT(LEDMAT_RGB) = (PORT(LEDMAT_RGB) & ~LEDMAT_RGB1) | rgb1;
 }
+
 static inline void _rgb2(u8 rgb2) {
 	PORT(LEDMAT_RGB) = (PORT(LEDMAT_RGB) & ~LEDMAT_RGB2) | (rgb2 << 3);
 }
+
 static inline void _clock() {
 	PORT(LEDMAT_CR) |= _BV(LEDMAT_CLK);
 	PORT(LEDMAT_CR) &= ~_BV(LEDMAT_CLK);
 }
+
 static inline void _latch() {
 	PORT(LEDMAT_CR) |= _BV(LEDMAT_LAT);
 	PORT(LEDMAT_CR) &= ~_BV(LEDMAT_LAT);
 }
+
 static inline void _out_enable() {
 	PORT(LEDMAT_CR) &= ~_BV(LEDMAT_OE);
 }
+
 static inline void _out_disable() {
 	PORT(LEDMAT_CR) |= _BV(LEDMAT_OE);
 }
+
 static inline void _tx_section(const u8* RGBs) {
 	for (u8 i = 0; i < LEDMAT_COL; i++) {
 		_rgb(*RGBs++);
 		_clock();
 	}
 }
+
+static inline void _refresh() {
+	static u8 section;
+
+	_tx_section(LEDMAT_FRONT_BUF[section]);
+	
+	_out_disable();
+	_latch();
+	_addr(section);
+	_out_enable();
+	
+	section = RR(section, LEDMAT_SECTION);
+}
+
+/* refresher for LED matrix & control brightness */
+static inline void timer2_init()
+{
+	TIMSK |= _BV(TOIE2);
+	TCCR2 |= TC_REFRESH_CLOCK_SELECT;
+	OCR2 = LEDMAT_DEFAULT_BRIGHTNESS;
+	TIMSK |= _BV(OCIE2);
+}
+
 static inline void _init_port()
 {
 	DDR(LEDMAT_RGB) |= LEDMAT_RGB_ALL;
@@ -56,6 +91,7 @@ void LEDMAT_init()
 {
 	_init_port();
 	_out_disable();
+	timer2_init();
 }
 
 void LEDMAT_swap_buffer()
@@ -96,33 +132,33 @@ void LEDMAT_fill_rgb_bit(u8 rgb)
 	memset(LEDMAT_BACK_BUF, rgb, sizeof(LEDMAT_BACK_BUF));
 }
 
-void LEDMAT_refresh()
+void LEDMAT_set_brightness(u8 brightness)
 {
-	static u8 section;
+	if (brightness >= LEDMAT_MAX_BRIGHTNESS) {
+		OCR2 = LEDMAT_MAX_BRIGHTNESS;
+	} else if (brightness <= LEDMAT_MIN_BRIGHTNESS) {
+		OCR2 = LEDMAT_MIN_BRIGHTNESS;
+	} else {
+		OCR2 = brightness;
+	}
+}
 
-	_tx_section(LEDMAT_FRONT_BUF[section]);
-	
+u8 LEDMAT_get_brightness()
+{
+	return OCR2;
+}
+
+/* LED matrix refresh */
+ISR(TIMER2_OVF_vect)
+{
+	_refresh();
+}
+
+/* brightness control */
+ISR(TIMER2_COMP_vect)
+{
 	_out_disable();
-	_latch();
-	_addr(section);
-	_out_enable();
-	
-	section = RR(section, LEDMAT_SECTION);
 }
-
-void LEDMAT_OE_disable()
-{
-	_out_disable();
-}
-
-void LEDMAT_OE_enable()
-{
-	_out_enable();
-}
-
-
-
-
 
 
 

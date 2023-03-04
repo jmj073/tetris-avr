@@ -9,6 +9,7 @@
 #ifndef IMAGES_H_
 #define IMAGES_H_
 
+#include <avr/pgmspace.h>
 extern const uint8_t GAMEOVER_IMAGE[32][8] PROGMEM;
 extern const uint8_t STANDBY_IMAGE[32][8] PROGMEM;
 

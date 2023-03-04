@@ -42,20 +42,20 @@
 #define LEDMAT_LAT		5
 #define LEDMAT_OE		6
 
+#define LEDMAT_MIN_BRIGHTNESS		0U
+#define LEDMAT_MAX_BRIGHTNESS		255U
+#define LEDMAT_DEFAULT_BRIGHTNESS	42U
+
 void LEDMAT_init();
 
 void LEDMAT_swap_buffer();
 void LEDMAT_copy_buffer();
 
 void LEDMAT_set_rgb_bit(u8 r, u8 c, u8 rgb);
-u8 LEDMAT_get_rgb_bit(u8 r, u8 c);
+u8   LEDMAT_get_rgb_bit(u8 r, u8 c);
 void LEDMAT_fill_rgb_bit(u8 rgb);
 
-void LEDMAT_refresh();
-
-// LEDMAT_refresh() 함수는 OE를 enable 시킨다는 것에 주의.
-void LEDMAT_OE_disable();
-void LEDMAT_OE_enable();
-
+void LEDMAT_set_brightness(u8 brightness);
+u8   LEDMAT_get_brightness();
 
 #endif /* LED_MATRIX_16X32_H_ */
