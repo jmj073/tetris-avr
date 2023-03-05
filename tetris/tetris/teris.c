@@ -38,8 +38,11 @@ static const u32 BLOCK[7][4] = {
 };
 
 // extract a 2-bit number from a block entry
-static inline i8 NUM(i8 r, i8 n) { return (BLOCK[P][r] >> n) & 3; }
-
+static inline u8 NUM(u8 r, u8 n) { return (BLOCK[P][r] >> n) & 3; }
+static inline u8 _width(u8 r) { return NUM(r, 16) + 1; }
+static inline u8 _height(u8 r) { return NUM(r, 18) + 1; }
+static inline u8 _getx(u8 r, u8 i) { return NUM(r, i * 4 + 2); }
+static inline u8 _gety(u8 r, u8 i) { return NUM(r, i * 4); }
 
 // create a new piece, don't remove old one (it has landed and should stick)
 static void new_piece() {
@@ -47,13 +50,13 @@ static void new_piece() {
 	Y = PY = 0;
 	P = rnum % 7;
 	R = PR = rnum % 4;
-	X = PX = rnum % (BOARD_COL - NUM(R, 16));
+	X = PX = rnum % (BOARD_COL - _width(R));
 }
 
 // set the value of the board for a particular (x,y,r) piece
-static void set_piece(i8 x, i8 y, i8 r, u8 v) {
-	for (i8 i = 0; i < 8; i += 2) {
-		BOARD[NUM(r, i * 2) + y][NUM(r, (i * 2) + 2) + x] = v;
+static void set_piece(u8 x, u8 y, u8 r, u8 v) {
+	for (u8 i = 0; i < 4; i++) {
+		BOARD[y + _gety(r, i)][x + _getx(r, i)] = v;
 	}
 }
 
@@ -65,32 +68,30 @@ static void update_piece() {
 
 // remove line(s) from the board if they're full
 static void remove_line() {
-	for (u8 row = Y; row <= Y + NUM(R, 18); row++) {
-		
+	for (u8 row = Y; row < Y + _height(R); row++) {
 		for (u8 i = 0; i < BOARD_COL; i++) {
 			if (!BOARD[row][i]) goto CONTINUE;
 		}
 
-		for (i8 i = row - 1; i > 0; i--) {
-			memcpy(&BOARD[i + 1][0], &BOARD[i][0], sizeof(**BOARD) * BOARD_COL);
+		for (u8 i = row; i > 0; i--) {
+			memcpy(BOARD[i], BOARD[i - 1], sizeof(**BOARD) * BOARD_COL);
 		}
-
-		//memset(&board[0][0], 0, 10);
+		
 		SCORE++;
-
+		
 		CONTINUE:;
 	}
 }
 
 // check if placing p at (x,y,r) will be a collision
-static u8 check_hit(i8 x, i8 y, i8 r) {
-	if (y + NUM(r, 18) > 19) return 1;
+static u8 check_hit(u8 x, u8 y, u8 r) {
+	if (y + _height(r) > BOARD_ROW) return 1;
 
 	set_piece(PX, PY, PR, 0);
 
 	u8 is_hit = 0;
-	for (u8 i = 0; i < 8; i += 2) {
-		if (BOARD[y + NUM(r, i * 2)][x + NUM(r, (i * 2) + 2)]) {
+	for (u8 i = 0; i < 4; i++) {
+		if (BOARD[y + _gety(r, i)][x + _getx(r, i)]) {
 			is_hit = 1;
 			break;
 		}
@@ -112,9 +113,7 @@ static u8 check_hit(i8 x, i8 y, i8 r) {
 
 static void rotate_piece(u8 flag) {
 	R = (flag == LEFT)  ? LR(R, 4) : RR(R, 4);
-	while (X + NUM(R, 16) > 9) {
-		 X--;
-	}
+	X = min(X, BOARD_COL - _width(R));
 	if (check_hit(X, Y, R)) {
 		X = PX;
 		R = PR;
@@ -126,7 +125,7 @@ static void move_piece(u8 flag)
 	if (flag & LEFT) {
 		(void)(X > 0 && !check_hit(X - 1, Y, R) && X--);
 	} else {
-		(void)(X + NUM(R, 16) < 9 && !check_hit(X + 1, Y, R) && X++);
+		(void)(X + _width(R) < BOARD_COL && !check_hit(X + 1, Y, R) && X++);
 	}
 }
 

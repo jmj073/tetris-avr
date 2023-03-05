@@ -27,7 +27,7 @@ static const uint8_t gamma8[] PROGMEM = {
 	171,173,174,175,176,178,179,180,181,183,184,185,187,188,189,190,
 	192,193,194,196,197,198,200,201,202,203,205,206,207,209,210,211,
 	213,214,215,217,218,219,221,222,223,225,226,227,229,230,232,233,
-	234,236,237,238,240,241,242,244,245,247,248,249,251,252,254,255
+	234,236,237,238,240,241,242,244,245,247,248,249,251,252,254,255,
 };
 #endif
 
@@ -36,7 +36,7 @@ static u8 __BRIGHTNESS;
 static u8 __LEDMAT_BUFFER[2][LEDMAT_SECTION][LEDMAT_COL];
 static u8 __LEDMAT_CURR_BUF = 0;
 
-#define LEDMAT_FRONT_BUF (__LEDMAT_BUFFER[__LEDMAT_CURR_BUF])
+#define LEDMAT_FRONT_BUF ((const u8(*)[LEDMAT_COL])__LEDMAT_BUFFER[__LEDMAT_CURR_BUF])
 #define LEDMAT_BACK_BUF (__LEDMAT_BUFFER[__LEDMAT_CURR_BUF ^ 1])
 
 static inline void _addr(u8 addr) {
@@ -105,7 +105,6 @@ static inline void _timer2_init()
 		_BV(WGM21) | _BV(WGM20)	| // Fast PWM
 		_BV(CS21) | _BV(CS20)	| // clk/64
 	0);
-	__BRIGHTNESS = LEDMAT_DEFAULT_BRIGHTNESS;
 	OCR2 = _correction(__BRIGHTNESS);
 	TIMSK |= _BV(TOIE2) | _BV(OCIE2);
 }
@@ -118,6 +117,7 @@ static inline void _init_port()
 
 void LEDMAT_init()
 {
+	__BRIGHTNESS = LEDMAT_DEFAULT_BRIGHTNESS;
 	_init_port();
 	_out_disable();
 	_timer2_init();
