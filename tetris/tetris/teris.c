@@ -23,7 +23,8 @@
 #define BOARD_ROW	20
 #define BOARD_COL	10
 
-static u8 X, Y, R, PX, PY, PR, P;
+static i8 X, Y;
+static u8 R, P;
 static u16 SCORE = 0;
 static u8 BOARD[BOARD_ROW][BOARD_COL];
 
@@ -39,31 +40,34 @@ static const u32 BLOCK[7][4] = {
 
 // extract a 2-bit number from a block entry
 static inline u8 NUM(u8 r, u8 n) { return (BLOCK[P][r] >> n) & 3; }
-static inline u8 _width(u8 r) { return NUM(r, 16) + 1; }
-static inline u8 _height(u8 r) { return NUM(r, 18) + 1; }
-static inline u8 _getx(u8 r, u8 i) { return NUM(r, i * 4 + 2); }
-static inline u8 _gety(u8 r, u8 i) { return NUM(r, i * 4); }
+static inline i8 _width(u8 r) { return NUM(r, 16) + 1; }
+static inline i8 _height(u8 r) { return NUM(r, 18) + 1; }
+static inline i8 _getx(u8 r, u8 i) { return NUM(r, i * 4 + 2); }
+static inline i8 _gety(u8 r, u8 i) { return NUM(r, i * 4); }
 
 // create a new piece, don't remove old one (it has landed and should stick)
 static void new_piece() {
 	int rnum = rand();
-	Y = PY = 0;
+	Y = 0;
 	P = rnum % 7;
-	R = PR = rnum % 4;
-	X = PX = rnum % (BOARD_COL - _width(R));
+	R = rnum % 4;
+	X = rnum % (BOARD_COL - _width(R) + 1);
 }
 
 // set the value of the board for a particular (x,y,r) piece
-static void set_piece(u8 x, u8 y, u8 r, u8 v) {
+static void set_piece(i8 x, i8 y, u8 r, u8 v) {
 	for (u8 i = 0; i < 4; i++) {
 		BOARD[y + _gety(r, i)][x + _getx(r, i)] = v;
 	}
 }
 
+static void erase_piece() {
+	set_piece(X, Y, R, 0);
+}
+
 // move a piece from old (p*) coords to new
-static void update_piece() {
-	set_piece(PX, PY, PR, 0);
-	set_piece(PX = X, PY = Y, PR = R, P + 1);
+static void draw_piece() {
+	set_piece(X, Y, R, P + 1);
 }
 
 // remove line(s) from the board if they're full
@@ -84,49 +88,34 @@ static void remove_line() {
 }
 
 // check if placing p at (x,y,r) will be a collision
-static u8 check_hit(u8 x, u8 y, u8 r) {
-	if (y + _height(r) > BOARD_ROW) return 1;
+static u8 check_hit(i8 x, i8 y, u8 r) {
+	if (y < 0 || y + _height(r) > BOARD_ROW) return 1;
+	if (x < 0 || x + _width(r) > BOARD_COL) return 1;
 
-	set_piece(PX, PY, PR, 0);
-
-	u8 is_hit = 0;
 	for (u8 i = 0; i < 4; i++) {
 		if (BOARD[y + _gety(r, i)][x + _getx(r, i)]) {
-			is_hit = 1;
-			break;
+			return 1;
 		}
 	}
 
-	set_piece(PX, PY, PR, P + 1);
-	return is_hit;
+	return 0;
 }
 
-//static void drop_piece() {
-	//while (!check_hit(X, Y + 1, R)) {
-		//Y++;
-		//update_piece();
-	//}
-	//
-	//remove_line();
-	//new_piece();
-//}
-
 static void rotate_piece(u8 flag) {
-	R = (flag == LEFT)  ? LR(R, 4) : RR(R, 4);
-	X = min(X, BOARD_COL - _width(R));
-	if (check_hit(X, Y, R)) {
-		X = PX;
-		R = PR;
-	}
+	i8 r = ((flag == LEFT)  ? LR(R, 4) : RR(R, 4));
+	i8 x = X;
+	
+	if (check_hit(x, Y, r) && 
+	check_hit(x -= (_width(r) - _width(R)), Y, r)) return;
+	
+	R = r;
+	X = x;
 }
 
 static void move_piece(u8 flag)
 {
-	if (flag & LEFT) {
-		(void)(X > 0 && !check_hit(X - 1, Y, R) && X--);
-	} else {
-		(void)(X + _width(R) < BOARD_COL && !check_hit(X + 1, Y, R) && X++);
-	}
+	i8 delta = ((flag & LEFT) ? -1 : 1);
+	(void)(check_hit(X + delta, Y, R) || (X += delta));
 }
 
 // drawing mechanism=================================================
@@ -219,15 +208,17 @@ void tetris_process_input(u8 curr_input, u8 prev_input)
 	}
 	
 	if (changed) {
-		update_piece();
+		draw_piece();
 		frame();
+		erase_piece();
 	}
 }
 
 u8 tetris_do_tick()
 {
 	if (check_hit(X, Y + 1, R)) {
-		if (!Y) return 0;
+		if (Y == 0) return 0;
+		draw_piece();
 		remove_line();
 		new_piece();
 		if (check_hit(X, Y, R)) return 0;
@@ -235,8 +226,9 @@ u8 tetris_do_tick()
 		Y++;
 	}
 
-	update_piece();
+	draw_piece();
 	frame();
+	erase_piece();
 	
 	return 1;
 }
@@ -245,6 +237,5 @@ void tetris_init()
 {	
 	memset((void*)BOARD, 0, sizeof(BOARD));
 	new_piece();
-	update_piece();
 	SCORE = 0;
 }

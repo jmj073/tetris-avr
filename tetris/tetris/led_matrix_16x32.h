@@ -44,7 +44,7 @@
 
 #define LEDMAT_MIN_BRIGHTNESS		((u8)0)
 #define LEDMAT_MAX_BRIGHTNESS		((u8)-1)
-#define LEDMAT_DEFAULT_BRIGHTNESS	((u8)42)
+#define LEDMAT_DEFAULT_BRIGHTNESS	((u8)64)
 
 void LEDMAT_init();
 
