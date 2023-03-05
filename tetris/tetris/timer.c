@@ -3,19 +3,21 @@
  *
  * Created: 2022-07-04 12:55:10
  *  Author: JMJ
- */ 
+ */
+
+#include "timer.h"
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-static volatile uint32_t timer0_millis;
-static volatile uint16_t timer0_fract;
+static volatile u32 timer0_millis;
+static volatile u16 timer0_fract;
 
 static inline
 void _inc_tick()
 {
-	uint32_t m = timer0_millis;
-	uint16_t f = timer0_fract;
+	u32 m = timer0_millis;
+	u16 f = timer0_fract;
 	
 	m++, f += 24;
 	if (f >= 1000) m++, f -= 1000;
@@ -32,9 +34,9 @@ void TimeBase_init()
 
 uint32_t millis()
 {
-	uint32_t m;
+	u32 m;
 	
-	uint8_t oldSREG = SREG;
+	u8 oldSREG = SREG;
 	
 	cli();
 	m = timer0_millis;

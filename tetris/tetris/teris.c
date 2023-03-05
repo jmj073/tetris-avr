@@ -201,7 +201,7 @@ void tetris_process_input(u8 curr_input, u8 prev_input)
 	} else if ( curr_input & LnR ) {
 		u32 curr = millis();
 		
-		if (TIME_OUTI(curr, PREV_MS_BTN_LR, WAIT_TIME_BTN_LR)) {
+		if (TIME_OUTI(curr, &PREV_MS_BTN_LR, WAIT_TIME_BTN_LR)) {
 			WAIT_TIME_BTN_LR = LR_SEMICONT_CONT;
 			move_piece(curr_input);
 			changed = 1;
@@ -230,11 +230,12 @@ u8 tetris_do_tick()
 		if (!Y) return 0;
 		remove_line();
 		new_piece();
+		if (check_hit(X, Y, R)) return 0;
 	} else {
 		Y++;
-		update_piece();
 	}
-	
+
+	update_piece();
 	frame();
 	
 	return 1;
@@ -244,5 +245,6 @@ void tetris_init()
 {	
 	memset((void*)BOARD, 0, sizeof(BOARD));
 	new_piece();
+	update_piece();
 	SCORE = 0;
 }

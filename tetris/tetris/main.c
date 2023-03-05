@@ -18,6 +18,10 @@
 #include "tetris.h"
 #include "images.h"
 
+typedef struct {
+	u32 tick;
+} GameConfig;
+
 int ADC_read();
 
 // initilize========================================================
@@ -76,12 +80,10 @@ static inline void standby_screen()
 	DMAT_draw_screen_from_pgm((const u8*)STANDBY_IMAGE);
 }
 
-static void gameover_screen()
+static inline void gameover_screen()
 {
-
 	DMAT_draw_screen_from_pgm((const u8*)GAMEOVER_IMAGE);
 	draw_score(DMAT_ROW / 2 + 3);
-
 	DMAT_update(0);
 }
 
@@ -125,6 +127,7 @@ static u32 menu()
 	DMAT_update(DMAT_CP);
 
 	loop {
+		_delay_ms(INPUT_POLL_MS);
 		u8 input = BTN_PRESSED();
 		
 		if (input & _BV(BTN_UP)) {
@@ -140,8 +143,7 @@ static u32 menu()
 			}
 		}
 		if (input & _BV(BTN_LEFT)) {
-			u32 curr_ms = millis();
-			if (TIME_OUT_MSA(curr_ms, LEVEL_CHANGE_MS)) {
+			if (TIME_OUT_MSA(millis(), LEVEL_CHANGE_MS)) {
 				draw_level_bar(curr_level = NEXT_LEVEL(curr_level));
 				DMAT_update(0);
 			}
@@ -149,39 +151,26 @@ static u32 menu()
 		if (input & _BV(BTN_RIGHT)) {
 			break;
 		}
-		
-		_delay_ms(10);
 	}
 	
 	return level_to_tick(curr_level);
 }
 
 static void gameover()
-{
+{	
 	gameover_screen();
-	
-	_delay_ms(500);
-	while (!BTN_PRESSED());
+	while (_delay_ms(INPUT_POLL_MS), BTN_PRESSED()); // until release
+	while (_delay_ms(INPUT_POLL_MS), !BTN_PRESSED()); // until press
+	while (_delay_ms(INPUT_POLL_MS), BTN_PRESSED()); // until release
 }
 
-static void run()
+static void main_game(const GameConfig* config)
 {
-	DEF_PREV_MS(INPUT_POLL_MS);
-	u32 PREV_TICK, TICK;
-	u8 PREV_INPUT;
-
-	tetris_init();
-
-	_delay_ms(500);
-	TICK = menu();
-
-	countdown(3);
-
+	u32 TICK = config->tick;
 	u32 init_value = millis();
-	PREV_MS(INPUT_POLL_MS) = init_value - INPUT_POLL_MS;
-	PREV_TICK = init_value - TICK;
-	
-	PREV_INPUT = 0;
+	u32 PREV_MS(INPUT_POLL_MS) = init_value - INPUT_POLL_MS;
+	u32 PREV_TICK = init_value - TICK;
+	u8 PREV_INPUT = 0;
 
 	loop {
 		u32 curr = millis();
@@ -196,13 +185,22 @@ static void run()
 		tetris_process_input(curr_input, PREV_INPUT);
 		PREV_INPUT = curr_input;
 
-		if (TIME_OUTI(curr, PREV_TICK, TICK)) {
+		if (TIME_OUTI(curr, &PREV_TICK, TICK)) {
 			if (!tetris_do_tick()) break;
 		}
 	}
+}
 
+static void run()
+{
+	GameConfig config;
+	config.tick = menu();
+	
+	tetris_init();
+	
+	countdown(3);
+	main_game(&config);
 	gameover();
-
 }
 
 int main()
@@ -211,128 +209,3 @@ int main()
 	sei();
 	loop run();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// TESTS==================================================================================
-
-#if 0 /* timer macro utility test */
-
-#define TEST 300
-
-int main()
-{
-	init();
-	sei();
-	
-	DMAT_set_rgb_bit(0, 0, CR | CG | CB);
-	DMAT_update(0);
-	
-	DEF_PREV_MS(TEST);
-	
-	loop {
-		u32 curr = millis();
-		
-		if (TIME_OUT_MSI(curr, TEST)) {
-			DMAT_update(0);
-		}
-	}
-}
-
-#endif /* timer macro utility test */
-
-#if 0 /* rect draw test */
-
-int main() {
-	LEDMAT_init();
-	TC2_init();
-
-	DMAT_start_write();
-	DMAT_draw_square_fill(10, 3, 5, CR | CG | CB);
-	DMAT_end_write(0);
-	
-
-	sei();
-
-	loop;
-}
-
-#endif /* rect draw test */
-
-
-#if 0 /* standby screen and eeprom test */
-
-#include <avr/eeprom.h>
-
-int main() {
-	LEDMAT_init();
-	TC2_init();
-	
-	u8* addr = (u8*)0;
-	
-	DMAT_start_write();
-	
-	for (u16 r = 0; r < 32; r++)
-		for (u16 c = 0; c < 16 / 2; c++) {
-			u8 rgb = eeprom_read_byte(addr++);
-			DMAT_set_rgb_bit(r, c, rgb & 7);
-			DMAT_set_rgb_bit(r, c + 16 / 2, rgb >> 3);
-		}
-		
-	DMAT_end_write(DMAT_NCP);
-	
-	sei();
-	
-	loop;
-}
-
-#endif /* standby screen and eeprom test */
